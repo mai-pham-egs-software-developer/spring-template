@@ -1,0 +1,41 @@
+# --- backend/ (Java / Maven) ---
+backend/**/target/
+backend/**/*.class
+backend/**/*.jar
+!backend/**/.mvn/wrapper/maven-wrapper.jar
+backend/**/.mvn/timing.properties
+backend/**/dependency-reduced-pom.xml
+
+# --- frontend/ (Node / Vite) ---
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# --- IDE (any folder) ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+.factorypath
+
+# --- OS (any folder) ---
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

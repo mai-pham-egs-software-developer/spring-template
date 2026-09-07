@@ -1,0 +1,46 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: main
+
+  security:
+    oauth2:
+      client:
+        registration:
+          # "oidc" is just this registration's id -- it shows up in the
+          # generated URLs (/oauth2/authorization/oidc, and in the
+          # redirect-uri template below). Rename it to match your IdP if
+          # you like; it is not a magic/reserved value.
+          oidc:
+            client-id: be-application
+            client-secret: tqcz8MZ637tflgS5Ycv7DAah311hbHNbzf2seFSeYROdz0BIvfLSxEIhsCNypinYgDUjuVOu2czaqWLfgJbCHY
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+        provider:
+          oidc:
+            # Keycloak issuer for a realm is always {base-url}/realms/{realm}.
+            # Spring Boot fetches {issuer-uri}/.well-known/openid-configuration
+            # at application STARTUP (blocking) to resolve the authorization,
+            # token, jwks and userinfo endpoints, so Keycloak must already be
+            # up and reachable at this URL before `mvn spring-boot:run` boots
+            # -- CHANGE-ME below to your actual Keycloak host/port and realm.
+            issuer-uri: http://localhost:8080/realms/bootstrap
+            user-name-attribute: preferred_username
+
+      # Lets this app ALSO accept Bearer access tokens issued by the same
+      # Keycloak realm (e.g. from the decoupled React SPA in ../../frontend,
+      # which does its own login via keycloak-js and calls this API with
+      # "Authorization: Bearer <token>" instead of a session cookie).
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bootstrap
+
+# Allows the React dev server to call this API with an Authorization header.
+# CHANGE-ME / extend if the SPA is served from another origin.
+app:
+  cors:
+    allowed-origins: http://localhost:5173
