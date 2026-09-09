@@ -39,8 +39,14 @@ spring:
         jwt:
           issuer-uri: http://localhost:8080/realms/bootstrap
 
-# Allows the React dev server to call this API with an Authorization header.
-# CHANGE-ME / extend if the SPA is served from another origin.
+security:
+  - path: /monitor/*
+    auth-type: BASIC
+    username: admin
+    password: admin
+  - path: /api/**
+    auth-type: BEARER
+
 app:
   cors:
     allowed-origins: http://localhost:5173

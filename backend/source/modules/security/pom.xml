@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>com.my.craft</groupId>
-    <artifactId>main</artifactId>
+    <artifactId>security</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>main</name>
-    <description>Template Spring Boot application: OIDC (OAuth2 client) login</description>
+    <name>security</name>
+    <description>Shared Spring Security config: OIDC (OAuth2 client) login + JWT resource server</description>
 
     <properties>
         <java.version>21</java.version>
@@ -26,32 +26,23 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.my.craft</groupId>
-            <artifactId>security</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- HttpSecurity / SecurityFilterChain / CorsUtils reference jakarta.servlet.*.
+             The actual servlet container comes from the consuming app's own
+             spring-boot-starter-web (e.g. applications/main) at runtime. -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

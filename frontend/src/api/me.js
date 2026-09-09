@@ -4,5 +4,5 @@ import apiClient from "./client";
 // principal authenticated the request -- here, the Keycloak access token
 // this app attaches as a Bearer header (see api/client.js).
 export function getMe() {
-  return apiClient.get("/").then((res) => res.data);
+  return apiClient.get("/me").then((res) => res.data);
 }
