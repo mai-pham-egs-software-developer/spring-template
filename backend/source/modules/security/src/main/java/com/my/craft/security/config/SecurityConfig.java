@@ -14,7 +14,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
+import org.casbin.jcasbin.main.Enforcer;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManagers;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,11 +36,13 @@ import org.springframework.security.oauth2.server.resource.web.DefaultBearerToke
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.my.craft.security.authz.CasbinAuthorizationManager;
 import com.my.craft.security.user.UserContextEnrichmentFilter;
 import com.my.craft.security.user.UserService;
 
@@ -76,22 +83,33 @@ public class SecurityConfig {
     }
 
     // All auth-type: BEARER rules share one chain, scoped to just their
-    // paths, validated as Bearer JWTs against the configured issuer.
+    // paths, validated as Bearer JWTs against the configured issuer. Also the
+    // one chain wired up for RBAC: past "authenticated", every request must
+    // additionally be allowed by the jcasbin Enforcer -- see
+    // CasbinAuthorizationManager / rbac_model.conf / rbac_policy.csv and
+    // docs/security.md. Any BEARER path with no matching policy row is
+    // denied by default, so extend rbac_policy.csv before adding new paths
+    // here.
     @Bean
     @Order(2)
     public SecurityFilterChain bearerAuthSecurityFilterChain(
-            HttpSecurity http, List<SecurityRuleProperties> securityRules, UserService userService) throws Exception {
+            HttpSecurity http, List<SecurityRuleProperties> securityRules, UserService userService, Enforcer casbinEnforcer)
+            throws Exception {
         List<String> paths = pathsOf(securityRules, AuthType.BEARER);
         if (paths.isEmpty()) {
             return null;
         }
+        AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<RequestAuthorizationContext>allOf(
+                new AuthorizationDecision(false),
+                AuthenticatedAuthorizationManager.authenticated(),
+                new CasbinAuthorizationManager(casbinEnforcer));
         http
                 .securityMatcher(paths.toArray(String[]::new))
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().access(rbac))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(bearerTokenResolver())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

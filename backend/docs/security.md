@@ -99,6 +99,10 @@ example of consuming this.
   with `cannot access jakarta.servlet.http.HttpServletRequest`. Scope is `provided` because the
   real servlet container comes from whichever app imports this module (e.g. `applications/main`
   via its own `spring-boot-starter-web`) at runtime — this module never runs standalone.
+- `org.casbin:jcasbin` — RBAC enforcement engine backing `CasbinConfig` / `CasbinAuthorizationManager`
+  (see "RBAC authorization (jcasbin)" below).
+- `spring-boot-starter-data-jpa` + `postgresql` (`runtime`) — back `JpaCasbinRuleAdapter`, the
+  `casbin_rule` table that makes policy DB-backed instead of file-backed.
 
 ## ⚠️ `defaultSecurityFilterChain` must always exist
 
@@ -119,6 +123,84 @@ matches *some* `SecurityFilterChain` (each chain configures its own `CorsFilter`
 chain gets **no CORS headers at all**, so a browser client (e.g. the Vite dev server at
 `http://localhost:5173`) has its request blocked even though `app.cors.allowed-origins` is set
 correctly — it looks like a CORS misconfiguration but the actual cause is the missing chain.
+
+## RBAC authorization (jcasbin)
+
+`bearerAuthSecurityFilterChain` additionally enforces role-based access control via
+[jcasbin](https://github.com/casbin/jcasbin), on top of (not instead of) `authenticated()`:
+
+```java
+AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<RequestAuthorizationContext>allOf(
+        new AuthorizationDecision(false),
+        AuthenticatedAuthorizationManager.authenticated(),
+        new CasbinAuthorizationManager(casbinEnforcer));
+...
+.authorizeHttpRequests(authorize -> authorize
+        .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+        .anyRequest().access(rbac))
+```
+
+- **`rbac_model.conf`** (classpath, fixed at startup) — a standard RBAC model: `sub`
+  (subject/role), `obj` (resource, matched with `keyMatch2`: `/api/users/*` matches
+  `/api/users/123` AND `/api/users/123/roles` — unlike the Ant patterns used elsewhere in this
+  module, jcasbin's `*` matches across `/`, i.e. behaves like Ant's `**`), `act` (HTTP method, or
+  `*` for any method).
+- **Policy itself is DB-backed, not file-backed** — the whole point being that it can change at
+  runtime. `CasbinConfig` builds the `Enforcer` from `rbac_model.conf` (still a classpath resource,
+  copied to a temp file once at startup since jcasbin's model loader needs a real filesystem path)
+  plus a `JpaCasbinRuleAdapter`, backed by the `casbin_rule` table (`CasbinRuleEntity` /
+  `CasbinRuleJpaRepository`, `com.my.craft.security.authz.jpa`). That table name/shape (`ptype`,
+  `v0`..`v5`) is the schema every official Casbin adapter (Go, Node, the JDBC adapter, ...) uses,
+  so any Casbin-aware admin tool can read/write it directly too.
+- **`rbac_policy.csv` is a one-time seed, not the live source of policy.** `CasbinConfig` only
+  reads it if `casbin_rule` is empty (first boot against a fresh DB) — it parses the CSV with
+  jcasbin's own `FileAdapter` into a throwaway `Model`, then writes that through
+  `JpaCasbinRuleAdapter.savePolicy(...)` into the table. After that, editing the CSV does nothing;
+  change policy via `CasbinPolicyController` (below) or by writing to `casbin_rule` yourself.
+- **`p` rows** are the actual grants (`role, path pattern, method`); **`g` rows** assign a role to
+  a subject (`g, <username>, <role>`). `CasbinAuthorizationManager` calls
+  `enforcer.enforce(subject, object, action)` with `subject` = `CustomAuthenticationToken`'s
+  `UserContext.username()`, `object` = `request.getRequestURI()`, `action` =
+  `request.getMethod()`.
+- **Default is deny.** A `BEARER` path with no matching `p` row (directly, or via no `g` role
+  assignment for that subject) is rejected — add a policy row before routing new paths through
+  this chain, the same way you'd add a new `security:` rule.
+- Only `bearerAuthSecurityFilterChain` is wired to `rbac`; `basicAuthSecurityFilterChain` and
+  `defaultSecurityFilterChain` still just check `authenticated()`. Swap their
+  `.anyRequest().authenticated()` for `.anyRequest().access(rbac)` the same way if those paths
+  need RBAC too — `CasbinAuthorizationManager` requires `CustomAuthenticationToken`, i.e. a chain
+  that registers `UserContextEnrichmentFilter` before authorization runs, which all three already
+  do.
+- `subject` is the raw username, decoupled from Spring's `ROLE_*`/`SCOPE_*` authorities — jcasbin
+  roles (the `g` rows) are a separate namespace, assigned via `g` rows, not derived from the JWT's
+  `realm_access.roles`. Map JWT roles into `g` rows (or change `CasbinAuthorizationManager` to
+  build `subject` from an authority instead of the username) if you want Keycloak to be the source
+  of truth for role assignment instead.
+
+### Changing policy at runtime
+
+`CasbinPolicyController` (`com.my.craft.security.authz.web`, itself served at
+`/api/admin/casbin/*` — `BEARER`-protected like every `/api/**` path, and RBAC-protected by the
+seeded `p, admin, /api/admin/casbin/*, *` row, so only an `admin` subject can reach it):
+
+| Endpoint | Effect |
+|---|---|
+| `GET /api/admin/casbin/policies` | List every `p` row (`enforcer.getPolicy()`). |
+| `POST /api/admin/casbin/policies` | Add a `p` row — `{"role", "pathPattern", "method"}`. |
+| `DELETE /api/admin/casbin/policies` | Remove a `p` row (exact match on all three fields). |
+| `GET /api/admin/casbin/roles` | List every `g` row (`enforcer.getGroupingPolicy()`). |
+| `POST /api/admin/casbin/roles` | Assign a role — `{"username", "role"}`. |
+| `DELETE /api/admin/casbin/roles` | Remove a role assignment. |
+| `POST /api/admin/casbin/reload` | Re-read `casbin_rule` from the DB. |
+
+Calls through `Enforcer`'s management API (`addPolicy`/`removePolicy`/`addRoleForUser`/...) update
+*both* this instance's in-memory copy and the `casbin_rule` table immediately (jcasbin's
+Auto-Save feature, on by default) — that's the supported way to change policy without a redeploy.
+Writing to `casbin_rule` some other way (psql, a migration, another service) skips the in-memory
+side: an already-running `Enforcer` won't see it until something calls `/reload` (or the instance
+restarts). Running multiple instances has the same gap between them — jcasbin's `Watcher`
+mechanism (e.g. a Redis pub/sub adapter) exists to broadcast "reload" across instances, but isn't
+wired up here.
 
 ## Extending with a new `auth-type`
 

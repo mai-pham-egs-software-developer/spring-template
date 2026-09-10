@@ -44,5 +44,22 @@
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- RBAC enforcement engine backing CasbinAuthorizationManager. -->
+        <dependency>
+            <groupId>org.casbin</groupId>
+            <artifactId>jcasbin</artifactId>
+            <version>1.99.0</version>
+        </dependency>
+        <!-- Backs JpaCasbinRuleAdapter, which stores casbin_rule rows so RBAC policy can change
+             at runtime (DB) instead of only via the bundled rbac_policy.csv seed file. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 </project>
