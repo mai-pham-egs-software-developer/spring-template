@@ -5,6 +5,23 @@ spring:
   application:
     name: main
 
+  # Same Postgres container as Keycloak (infras/local/compose.yml), separate database so
+  # file-storage's own stored_file table stays out of Keycloak's schema. That second `app`
+  # database is created by an init script that only runs the FIRST time the postgres container's
+  # data volume is initialized -- if you already had the stack running before this database was
+  # added, recreate the volume (`docker compose down -v` in infras/local) or create it by hand
+  # (`CREATE DATABASE app;` via psql/any client against localhost:45432).
+  datasource:
+    url: jdbc:postgresql://localhost:45432/craft
+    username: keycloak
+    password: keycloak
+  jpa:
+    open-in-view: false
+    hibernate:
+      # CHANGE-ME: fine for a template/dev setup with a single owner of the schema
+      # (this module); swap for a real migration tool (Flyway/Liquibase) before production.
+      ddl-auto: update
+
   security:
     oauth2:
       client:
@@ -63,10 +80,13 @@ file-storage:
     cleanup-cron: "0 0 * * * *"
   s3:
     region: us-east-1
-    # CHANGE-ME: leave endpoint unset for real AWS S3 (credentials come from the default AWS
-    # provider chain -- env vars, ~/.aws/credentials, IAM role, ...). Point it at a local MinIO
-    # instead to switch provider without touching any code, e.g.:
-    # endpoint: http://localhost:9000
-    # path-style-access-enabled: true
-    # access-key: minioadmin
-    # secret-key: minioadmin
+    # Points at the local MinIO from infras/local/compose.yml (`docker compose up` in that
+    # directory) by default -- its S3 API is exposed on the host as localhost:49000, and
+    # minio-init there creates the `my-bucket` bucket on first startup.
+    # CHANGE-ME for real AWS S3: unset endpoint/path-style-access-enabled/access-key/secret-key --
+    # credentials then come from the default AWS provider chain (env vars, ~/.aws/credentials,
+    # IAM role, ...) instead.
+    endpoint: http://localhost:49000
+    path-style-access-enabled: true
+    access-key: minioadmin
+    secret-key: minioadmin

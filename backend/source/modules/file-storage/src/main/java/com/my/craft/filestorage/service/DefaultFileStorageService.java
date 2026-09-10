@@ -1,6 +1,7 @@
 package com.my.craft.filestorage.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -15,8 +16,10 @@ import com.my.craft.filestorage.file.FileMetadataStore;
 import com.my.craft.filestorage.file.FileNotFoundException;
 import com.my.craft.filestorage.file.FileStatus;
 import com.my.craft.filestorage.file.StoredFile;
+import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
 import com.my.craft.filestorage.service.dto.CreateUploadRequest;
 import com.my.craft.filestorage.service.dto.DownloadUrlResponse;
+import com.my.craft.filestorage.service.dto.FileSummaryResponse;
 import com.my.craft.filestorage.service.dto.UploadUrlResponse;
 import com.my.craft.filestorage.storage.PresignedUrl;
 import com.my.craft.filestorage.storage.StorageProvider;
@@ -60,10 +63,11 @@ public class DefaultFileStorageService implements FileStorageService {
     }
 
     @Override
-    public void confirm(UUID fileId, UserContext actor) {
+    public void confirm(UUID fileId, ConfirmUploadRequest request, UserContext actor) {
         StoredFile file = findOrThrow(fileId);
         file.setStatus(FileStatus.CONFIRMED);
         file.setConfirmedBy(AuditActor.from(actor));
+        file.setSize(request.size());
         metadataStore.save(file);
         log.info("file {} (key={}) confirmed by user {}", fileId, file.getKey(), actor.userId());
     }
@@ -82,6 +86,20 @@ public class DefaultFileStorageService implements FileStorageService {
         storageProvider.delete(file.getKey());
         metadataStore.deleteById(fileId);
         log.info("file {} (key={}) deleted by user {}", fileId, file.getKey(), actor.userId());
+    }
+
+    @Override
+    public List<FileSummaryResponse> listFiles(UserContext actor) {
+        log.info("Listing files for user {}", actor.userId());
+        return metadataStore.findAllConfirmed().stream()
+                .map(file -> new FileSummaryResponse(
+                        file.getId(),
+                        file.getOriginalFileName(),
+                        file.getContentType(),
+                        file.getSize(),
+                        file.getCreatedAt(),
+                        file.getConfirmedBy() != null ? file.getConfirmedBy().username() : null))
+                .toList();
     }
 
     private StoredFile findOrThrow(UUID fileId) {

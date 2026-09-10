@@ -9,9 +9,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.my.craft.filestorage.storage.S3StorageProvider;
@@ -22,10 +24,17 @@ import com.my.craft.filestorage.storage.StorageProvider;
  * {@link StorageProvider} bean. Leaving {@code s3.endpoint} unset targets real AWS S3; pointing it
  * at a MinIO (or other S3-compatible) host switches the backend without any code change -- see
  * docs/file-storage.md.
+ *
+ * <p>Also scans/enables the module's own {@code file.jpa} entity + repository -- {@code
+ * @EntityScan}/{@code @EnableJpaRepositories} don't follow the consuming app's widened {@code
+ * @SpringBootApplication(scanBasePackages = ...)} the way plain {@code @Component} beans do, so
+ * this module registers them on itself rather than requiring every consumer to know about it.
  */
 @Configuration
 @EnableScheduling
 @EnableConfigurationProperties(FileStorageProperties.class)
+@EntityScan(basePackages = "com.my.craft.filestorage.file.jpa")
+@EnableJpaRepositories(basePackages = "com.my.craft.filestorage.file.jpa")
 public class FileStorageConfig {
 
     @Bean

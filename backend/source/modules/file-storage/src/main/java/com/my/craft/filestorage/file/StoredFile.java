@@ -18,6 +18,9 @@ public class StoredFile {
     private final AuditActor createdBy;
     private FileStatus status;
     private AuditActor confirmedBy;
+    /** Byte size, unknown until {@link #setSize} is called at confirm time -- the backend never
+     * sees the object bytes for a presigned upload, so this is 0 for a still-{@code PENDING} file. */
+    private long size;
 
     public StoredFile(
             UUID id,
@@ -80,5 +83,13 @@ public class StoredFile {
 
     public void setConfirmedBy(AuditActor confirmedBy) {
         this.confirmedBy = confirmedBy;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
     }
 }

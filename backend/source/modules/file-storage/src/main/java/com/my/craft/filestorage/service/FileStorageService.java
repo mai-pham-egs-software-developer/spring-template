@@ -1,11 +1,14 @@
 package com.my.craft.filestorage.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.my.craft.security.user.UserContext;
 
+import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
 import com.my.craft.filestorage.service.dto.CreateUploadRequest;
 import com.my.craft.filestorage.service.dto.DownloadUrlResponse;
+import com.my.craft.filestorage.service.dto.FileSummaryResponse;
 import com.my.craft.filestorage.service.dto.UploadUrlResponse;
 
 /**
@@ -19,9 +22,12 @@ public interface FileStorageService {
     UploadUrlResponse createUploadUrl(CreateUploadRequest request, UserContext actor);
 
     /** Marks the upload confirmed, exempting it from the temp-file cleanup schedule. */
-    void confirm(UUID fileId, UserContext actor);
+    void confirm(UUID fileId, ConfirmUploadRequest request, UserContext actor);
 
     DownloadUrlResponse createDownloadUrl(UUID fileId, UserContext actor);
 
     void delete(UUID fileId, UserContext actor);
+
+    /** Every confirmed file, most recently uploaded first. */
+    List<FileSummaryResponse> listFiles(UserContext actor);
 }

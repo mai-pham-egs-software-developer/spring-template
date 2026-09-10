@@ -12,6 +12,5 @@
 	<modules>
 		<module>applications</module>
 		<module>modules</module>
-		<module>modules/file-storage</module>
 	</modules>
 </project>

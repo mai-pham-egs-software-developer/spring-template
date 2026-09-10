@@ -11,5 +11,6 @@
     
 	<modules>
 		<module>security</module>
+		<module>file-storage</module>
 	</modules>
 </project>

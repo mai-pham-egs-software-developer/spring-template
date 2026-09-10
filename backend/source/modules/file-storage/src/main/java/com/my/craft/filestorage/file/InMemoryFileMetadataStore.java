@@ -1,19 +1,19 @@
 package com.my.craft.filestorage.file;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.stereotype.Component;
-
 /**
- * In-memory {@link FileMetadataStore}. Fine for a single-instance template/dev setup; metadata is
- * lost on restart and not shared across replicas -- see docs/file-storage.md.
+ * In-memory {@link FileMetadataStore}. Not a Spring bean -- {@code com.my.craft.filestorage.file
+ * .jpa.JpaFileMetadataStore} is what's actually wired at runtime, backed by the {@code
+ * stored_file} table (see docs/file-storage.md). Kept around for tests that want a
+ * {@link FileMetadataStore} without a database; construct it directly with {@code new}.
  */
-@Component
 public class InMemoryFileMetadataStore implements FileMetadataStore {
 
     private final Map<UUID, StoredFile> files = new ConcurrentHashMap<>();
@@ -34,6 +34,14 @@ public class InMemoryFileMetadataStore implements FileMetadataStore {
                 .filter(StoredFile::isTemporary)
                 .filter(file -> file.getStatus() == FileStatus.PENDING)
                 .filter(file -> file.getCreatedAt().isBefore(threshold))
+                .toList();
+    }
+
+    @Override
+    public List<StoredFile> findAllConfirmed() {
+        return files.values().stream()
+                .filter(file -> file.getStatus() == FileStatus.CONFIRMED)
+                .sorted(Comparator.comparing(StoredFile::getCreatedAt).reversed())
                 .toList();
     }
 

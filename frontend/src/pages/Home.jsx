@@ -3,7 +3,7 @@ import { getMe } from "../api/me";
 import { useAuth } from "../auth/AuthContext";
 
 export function Home() {
-  const { user, logout, hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const [meResult, setMeResult] = useState(null);
   const [meError, setMeError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,10 +29,6 @@ export function Home() {
       </button>
       {meError && <p style={{ color: "crimson" }}>Error: {meError}</p>}
       {meResult && <pre>{JSON.stringify(meResult, null, 2)}</pre>}
-
-      <button type="button" onClick={() => logout()}>
-        Logout
-      </button>
     </section>
   );
 }

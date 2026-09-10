@@ -59,8 +59,9 @@ through the app itself. The storage backend sits behind a `StorageProvider` inte
 `S3StorageProvider` is the only implementation, and it targets AWS S3 or any S3-compatible service
 (MinIO, ...) purely via `file-storage.s3.*` config, no code change. Also owns a scheduled job
 (`TempFileCleanupScheduler`) that purges unconfirmed temp uploads past their TTL. Metadata is
-currently in-memory (`InMemoryFileMetadataStore`) rather than backed by `persistent` — see
-[file-storage.md](file-storage.md). Depends on `security` for the `UserContext` its service layer
+JPA-backed (`file.jpa.JpaFileMetadataStore`, its own `stored_file` table on a dedicated `app`
+database — schema managed via `ddl-auto`, not a migration tool yet) rather than routed through
+`persistent` — see [file-storage.md](file-storage.md). Depends on `security` for the `UserContext` its service layer
 stamps onto each `StoredFile` (`createdBy`/`confirmedBy`) for audit purposes — actual auth
 enforcement on `/api/files/**` still comes from the consuming service's own `security:` rule.
 
@@ -84,6 +85,6 @@ Libraries never depend on service modules, and `persistent` is the one library e
 | `modules/security` | library | implemented (auth/authz config); table models not yet added |
 | `modules/persistent` | library | placeholder |
 | `modules/data-audit-log` | library | placeholder |
-| `modules/file-storage` | library | implemented (presigned URLs, S3/MinIO provider, temp cleanup schedule); metadata store is in-memory, not yet backed by `persistent` |
+| `modules/file-storage` | library | implemented (presigned URLs, S3/MinIO provider, temp cleanup schedule, JPA-backed metadata store) |
 
 See [../README.md](../README.md) for the full file-level module tree.

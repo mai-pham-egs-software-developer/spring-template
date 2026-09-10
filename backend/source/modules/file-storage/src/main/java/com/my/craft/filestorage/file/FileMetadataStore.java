@@ -20,5 +20,8 @@ public interface FileMetadataStore {
     /** Temp uploads still {@link FileStatus#PENDING} and created before {@code threshold}. */
     List<StoredFile> findExpiredTemp(Instant threshold);
 
+    /** Every {@link FileStatus#CONFIRMED} file, most recently created first. */
+    List<StoredFile> findAllConfirmed();
+
     void deleteById(UUID id);
 }

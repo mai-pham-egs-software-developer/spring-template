@@ -1,5 +1,6 @@
 package com.my.craft.filestorage.web;
 
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
@@ -17,8 +18,10 @@ import com.my.craft.security.user.CustomAuthenticationToken;
 import com.my.craft.security.user.UserContext;
 
 import com.my.craft.filestorage.service.FileStorageService;
+import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
 import com.my.craft.filestorage.service.dto.CreateUploadRequest;
 import com.my.craft.filestorage.service.dto.DownloadUrlResponse;
+import com.my.craft.filestorage.service.dto.FileSummaryResponse;
 import com.my.craft.filestorage.service.dto.UploadUrlResponse;
 
 /**
@@ -37,6 +40,11 @@ public class FileStorageController {
         this.fileStorageService = fileStorageService;
     }
 
+    @GetMapping
+    public List<FileSummaryResponse> list(Authentication authentication) {
+        return fileStorageService.listFiles(actorOf(authentication));
+    }
+
     @PostMapping("/presign-upload")
     public UploadUrlResponse presignUpload(@Valid @RequestBody CreateUploadRequest request, Authentication authentication) {
         return fileStorageService.createUploadUrl(request, actorOf(authentication));
@@ -48,8 +56,9 @@ public class FileStorageController {
     }
 
     @PostMapping("/{fileId}/confirm")
-    public ResponseEntity<Void> confirm(@PathVariable UUID fileId, Authentication authentication) {
-        fileStorageService.confirm(fileId, actorOf(authentication));
+    public ResponseEntity<Void> confirm(
+            @PathVariable UUID fileId, @Valid @RequestBody ConfirmUploadRequest request, Authentication authentication) {
+        fileStorageService.confirm(fileId, request, actorOf(authentication));
         return ResponseEntity.noContent().build();
     }
 

@@ -5,6 +5,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -17,7 +18,9 @@ import com.my.craft.filestorage.config.FileStorageProperties;
 import com.my.craft.filestorage.file.FileNotFoundException;
 import com.my.craft.filestorage.file.FileStatus;
 import com.my.craft.filestorage.file.InMemoryFileMetadataStore;
+import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
 import com.my.craft.filestorage.service.dto.CreateUploadRequest;
+import com.my.craft.filestorage.service.dto.FileSummaryResponse;
 import com.my.craft.filestorage.service.dto.UploadUrlResponse;
 import com.my.craft.filestorage.storage.PresignedUrl;
 import com.my.craft.filestorage.storage.StorageProvider;
@@ -51,12 +54,13 @@ class DefaultFileStorageServiceTest {
         UploadUrlResponse upload =
                 service.createUploadUrl(new CreateUploadRequest("doc.pdf", "application/pdf", false), actor);
 
-        service.confirm(upload.fileId(), actor);
+        service.confirm(upload.fileId(), new ConfirmUploadRequest(2048), actor);
         assertThat(metadataStore.findById(upload.fileId()))
                 .get()
                 .satisfies(file -> {
                     assertThat(file.getStatus()).isEqualTo(FileStatus.CONFIRMED);
                     assertThat(file.getConfirmedBy().userId()).isEqualTo(actor.userId());
+                    assertThat(file.getSize()).isEqualTo(2048);
                 });
 
         service.delete(upload.fileId(), actor);
@@ -66,7 +70,23 @@ class DefaultFileStorageServiceTest {
 
     @Test
     void confirm_unknownFileId_throwsFileNotFoundException() {
-        assertThatThrownBy(() -> service.confirm(UUID.randomUUID(), actor)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> service.confirm(UUID.randomUUID(), new ConfirmUploadRequest(0), actor))
+                .isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
+    void listFiles_returnsOnlyConfirmedFilesMostRecentFirst() {
+        UploadUrlResponse pending = service.createUploadUrl(new CreateUploadRequest("draft.txt", "text/plain", true), actor);
+        UploadUrlResponse confirmed =
+                service.createUploadUrl(new CreateUploadRequest("report.pdf", "application/pdf", false), actor);
+        service.confirm(confirmed.fileId(), new ConfirmUploadRequest(4096), actor);
+
+        List<FileSummaryResponse> files = service.listFiles(actor);
+
+        assertThat(files).extracting(FileSummaryResponse::fileId).containsExactly(confirmed.fileId());
+        assertThat(files).extracting(FileSummaryResponse::fileId).doesNotContain(pending.fileId());
+        assertThat(files.get(0).size()).isEqualTo(4096);
+        assertThat(files.get(0).uploadedBy()).isEqualTo(actor.username());
     }
 
     private static class RecordingStorageProvider implements StorageProvider {
