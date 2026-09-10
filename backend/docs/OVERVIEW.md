@@ -13,7 +13,8 @@ backend/source/
 └─ modules/                 (libraries)
    ├─ security/             → auth/authz library, owns its own tables
    ├─ persistent/           → shared persistence layer / shared tables
-   └─ data-audit-log/       → audit logging library (planned)
+   ├─ data-audit-log/       → audit logging library (planned)
+   └─ file-storage/         → presigned upload/download URLs, swappable S3/MinIO backend, temp-file cleanup schedule
 ```
 
 ## `applications/` — service modules
@@ -50,10 +51,24 @@ The shared persistence layer. It is meant to own the JPA/DB plumbing and any tab
 
 Planned audit-logging library. It is expected to depend on `persistent` for its storage rather than owning a separate schema. Currently an empty placeholder — not yet scaffolded into the reactor.
 
+### `file-storage`
+
+Presigned-URL file upload/download library: `applications/main` (or any service) gets a file id
+and a presigned URL to upload/download directly against object storage, never routing bytes
+through the app itself. The storage backend sits behind a `StorageProvider` interface —
+`S3StorageProvider` is the only implementation, and it targets AWS S3 or any S3-compatible service
+(MinIO, ...) purely via `file-storage.s3.*` config, no code change. Also owns a scheduled job
+(`TempFileCleanupScheduler`) that purges unconfirmed temp uploads past their TTL. Metadata is
+currently in-memory (`InMemoryFileMetadataStore`) rather than backed by `persistent` — see
+[file-storage.md](file-storage.md). Depends on `security` for the `UserContext` its service layer
+stamps onto each `StoredFile` (`createdBy`/`confirmedBy`) for audit purposes — actual auth
+enforcement on `/api/files/**` still comes from the consuming service's own `security:` rule.
+
 ## Dependency direction
 
 ```text
 applications/main  ──depends on──▶  modules/security  ──depends on──▶  modules/persistent
+applications/main  ──depends on──▶  modules/file-storage  ──depends on──▶  modules/security
 applications/inventory-service (planned) ─▶ modules/security, modules/persistent
 modules/data-audit-log (planned) ────────▶  modules/persistent
 ```
@@ -69,5 +84,6 @@ Libraries never depend on service modules, and `persistent` is the one library e
 | `modules/security` | library | implemented (auth/authz config); table models not yet added |
 | `modules/persistent` | library | placeholder |
 | `modules/data-audit-log` | library | placeholder |
+| `modules/file-storage` | library | implemented (presigned URLs, S3/MinIO provider, temp cleanup schedule); metadata store is in-memory, not yet backed by `persistent` |
 
 See [../README.md](../README.md) for the full file-level module tree.
