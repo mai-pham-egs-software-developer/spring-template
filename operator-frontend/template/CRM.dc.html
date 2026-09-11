@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/eastgate-design-system-e5cfdd93-0919-466b-90de-b0b3f75e08b7/colors_and_type.css">
+  <link rel="stylesheet" href="_ds/eastgate-design-system-e5cfdd93-0919-466b-90de-b0b3f75e08b7/styles.css">
+  <script src="_ds/eastgate-design-system-e5cfdd93-0919-466b-90de-b0b3f75e08b7/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body{margin:0;background:var(--color-bg-alt)}
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-thumb{background:var(--color-ink-100);border-radius:99px}
+    table{border-collapse:collapse;width:100%}
+    input[type="text"],input[type="email"],input[type="tel"],select{font-family:var(--font-sans);font-size:14px;color:var(--color-fg-1);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);padding:9px 12px;width:100%;box-sizing:border-box;background:var(--color-white)}
+    input:focus,select:focus{outline:none;box-shadow:var(--shadow-focus);border-color:var(--color-blue)}
+    .egs-i{width:18px;height:18px;flex:none}
+  </style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;font-family:var(--font-sans)">
+
+  <!-- Sidebar -->
+  <div style="width:240px;flex:none;background:var(--color-ink-900);display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+    <div style="display:flex;align-items:center;gap:10px;padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.08)">
+      <img src="assets/egs-mark-white.svg" alt="EG" style="width:28px;height:28px;flex:none" />
+      <div style="color:#fff;font-weight:600;font-size:15px;letter-spacing:-0.01em">Eastgate CRM</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px;padding:16px 12px;flex:1">
+      <div onClick="{{ goToProfiles }}" style="{{ navItemStyle_profiles }}"><i data-lucide="users" class="egs-i" stroke-width="1.5"></i>My Profiles</div>
+      <div onClick="{{ goToFiles }}" style="{{ navItemStyle_files }}"><i data-lucide="folder" class="egs-i" stroke-width="1.5"></i>File Management</div>
+      <div onClick="{{ goToUsers }}" style="{{ navItemStyle_users }}"><i data-lucide="shield-check" class="egs-i" stroke-width="1.5"></i>User Management</div>
+      <div onClick="{{ goToAudit }}" style="{{ navItemStyle_audit }}"><i data-lucide="clipboard-list" class="egs-i" stroke-width="1.5"></i>Audit Log</div>
+      <div onClick="{{ goToRoles }}" style="{{ navItemStyle_roles }}"><i data-lucide="key-round" class="egs-i" stroke-width="1.5"></i>Roles &amp; Permissions</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:18px 20px;border-top:1px solid rgba(255,255,255,0.08)">
+      <div style="width:32px;height:32px;border-radius:999px;background:var(--color-purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none">DN</div>
+      <div style="min-width:0">
+        <div style="color:#fff;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Duc Nguyen</div>
+        <div style="color:var(--color-ink-300);font-size:12px">Administrator</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 32px;background:var(--color-white);border-bottom:1px solid var(--color-border)">
+      <div>
+        <div style="font-size:12px;color:var(--color-fg-3);margin-bottom:2px">{{ breadcrumb }}</div>
+        <h1 style="font-size:24px;font-weight:600;line-height:1.2">{{ pageTitle }}</h1>
+      </div>
+      <sc-if value="{{ showListActions }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="position:relative">
+            <i data-lucide="search" class="egs-i" stroke-width="1.5" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--color-fg-3)"></i>
+            <input type="text" placeholder="{{ searchPlaceholder }}" style="width:240px;padding-left:38px" />
+          </div>
+          <sc-if value="{{ isFiles }}" hint-placeholder-val="{{ false }}">
+            <button style="display:flex;align-items:center;gap:6px;background:var(--color-purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer"><i data-lucide="upload" class="egs-i" stroke-width="1.5"></i>Upload file</button>
+          </sc-if>
+          <sc-if value="{{ isNotFiles }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ isNotAudit }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ createNew }}" style="display:flex;align-items:center;gap:6px;background:var(--color-purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer"><i data-lucide="plus" class="egs-i" stroke-width="1.5"></i>{{ createLabel }}</button>
+            </sc-if>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showBackButton }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ backToList }}" style="display:flex;align-items:center;gap:6px;background:none;color:var(--color-fg-2);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);padding:9px 14px;font-size:14px;font-weight:500;cursor:pointer"><i data-lucide="arrow-left" class="egs-i" stroke-width="1.5"></i>Back to list</button>
+      </sc-if>
+    </div>
+
+    <!-- Content -->
+    <div style="flex:1;padding:32px;overflow:auto">
+
+      <!-- MY PROFILE (current logged-in user) -->
+      <sc-if value="{{ showProfileDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px;background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:32px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--color-blue-100);color:var(--color-blue-700);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex:none">{{ selectedProfile.initials }}</div>
+            <div>
+              <div style="font-size:18px;font-weight:600">{{ selectedProfile.name }}</div>
+              <span style="{{ selectedProfile.statusPillStyle }}">{{ selectedProfile.status }}</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px">
+            <div><div style="{{ labelStyle }}">Full name</div><input type="text" value="{{ selectedProfile.name }}" /></div>
+            <div><div style="{{ labelStyle }}">Email</div><input type="email" value="{{ selectedProfile.email }}" /></div>
+            <div><div style="{{ labelStyle }}">Phone</div><input type="tel" value="{{ selectedProfile.phone }}" /></div>
+            <div><div style="{{ labelStyle }}">Status</div>
+              <select><option>Active</option><option>Inactive</option></select>
+            </div>
+            <div><div style="{{ labelStyle }}">Last login</div><div style="{{ readonlyStyle }}">{{ selectedProfile.lastLogin }}</div></div>
+            <div><div style="{{ labelStyle }}">Created</div><div style="{{ readonlyStyle }}">{{ selectedProfile.created }}</div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:32px;padding-top:20px;border-top:1px solid var(--color-border)">
+            <button style="{{ primaryButtonStyle }}">Save changes</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- FILES LIST -->
+      <sc-if value="{{ showFilesList }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;color:var(--color-fg-3);font-size:13px;margin-bottom:14px">
+            <span>Home</span><i data-lucide="chevron-right" class="egs-i" style="width:14px;height:14px" stroke-width="1.5"></i><span style="color:var(--color-fg-1);font-weight:500">Contracts</span>
+          </div>
+          <div style="background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);overflow:hidden">
+            <table>
+              <thead>
+                <tr style="background:var(--color-mist)">
+                  <th style="{{ thStyle }}">Name</th>
+                  <th style="{{ thStyle }}">Size</th>
+                  <th style="{{ thStyle }}">Owner</th>
+                  <th style="{{ thStyle }}">Modified</th>
+                  <th style="{{ thStyle }}"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ files }}" as="f" hint-placeholder-count="6">
+                  <tr onClick="{{ f.open }}" style="{{ rowStyle }}">
+                    <td style="{{ tdStyle }}">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <i data-lucide="{{ f.icon }}" class="egs-i" stroke-width="1.5" style="color:var(--color-fg-3)"></i>
+                        <span style="font-weight:500;color:var(--color-fg-1)">{{ f.name }}</span>
+                      </div>
+                    </td>
+                    <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ f.size }}</td>
+                    <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ f.owner }}</td>
+                    <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ f.modified }}</td>
+                    <td style="{{ tdStyle }};text-align:right"><i data-lucide="chevron-right" class="egs-i" stroke-width="1.5" style="color:var(--color-fg-3)"></i></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- FILE DETAIL -->
+      <sc-if value="{{ showFileDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px;background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:32px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+            <div style="width:52px;height:52px;border-radius:var(--radius-md);background:var(--color-mist);color:var(--color-fg-2);display:flex;align-items:center;justify-content:center;flex:none">
+              <i data-lucide="{{ selectedFile.icon }}" style="width:26px;height:26px" stroke-width="1.5"></i>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:600">{{ selectedFile.name }}</div>
+              <div style="color:var(--color-fg-3);font-size:13px">{{ selectedFile.size }} · uploaded by {{ selectedFile.owner }}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px">
+            <div><div style="{{ labelStyle }}">File name</div><input type="text" value="{{ selectedFile.name }}" /></div>
+            <div><div style="{{ labelStyle }}">Owner</div><input type="text" value="{{ selectedFile.owner }}" /></div>
+            <div><div style="{{ labelStyle }}">Size</div><div style="{{ readonlyStyle }}">{{ selectedFile.size }}</div></div>
+            <div><div style="{{ labelStyle }}">Modified</div><div style="{{ readonlyStyle }}">{{ selectedFile.modified }}</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--color-border)">
+            <button style="{{ deleteButtonStyle }}"><i data-lucide="trash-2" class="egs-i" stroke-width="1.5"></i>Delete file</button>
+            <div style="display:flex;gap:10px">
+              <button style="{{ secondaryButtonStyle }}"><i data-lucide="download" class="egs-i" stroke-width="1.5"></i>Download</button>
+              <button onClick="{{ backToList }}" style="{{ primaryButtonStyle }}">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- USERS LIST -->
+      <sc-if value="{{ showUsersList }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);overflow-x:auto">
+          <table style="min-width:720px">
+            <thead>
+              <tr style="background:var(--color-mist)">
+                <th style="{{ thStyle }}">Name</th>
+                <th style="{{ thStyle }}">Email</th>
+                <th style="{{ thStyle }}">Last active</th>
+                <th style="{{ thStyle }}"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ users }}" as="u" hint-placeholder-count="5">
+                <tr onClick="{{ u.open }}" style="{{ rowStyle }}">
+                  <td style="{{ tdStyle }}">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="width:30px;height:30px;border-radius:999px;background:var(--color-purple-100);color:var(--color-purple-700);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none">{{ u.initials }}</div>
+                      <span style="font-weight:500;color:var(--color-fg-1)">{{ u.name }}</span>
+                    </div>
+                  </td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ u.email }}</td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ u.lastActive }}</td>
+                  <td style="{{ tdStyle }};text-align:right"><i data-lucide="chevron-right" class="egs-i" stroke-width="1.5" style="color:var(--color-fg-3)"></i></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <!-- USER DETAIL -->
+      <sc-if value="{{ showUserDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px;background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:32px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--color-purple-100);color:var(--color-purple-700);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex:none">{{ selectedUser.initials }}</div>
+            <div style="font-size:18px;font-weight:600">{{ selectedUser.name }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px">
+            <div><div style="{{ labelStyle }}">Full name</div><input type="text" value="{{ selectedUser.name }}" /></div>
+            <div><div style="{{ labelStyle }}">Email</div><input type="email" value="{{ selectedUser.email }}" /></div>
+            <div><div style="{{ labelStyle }}">Last active</div><div style="{{ readonlyStyle }}">{{ selectedUser.lastActive }}</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--color-border)">
+            <button style="{{ deleteButtonStyle }}"><i data-lucide="user-x" class="egs-i" stroke-width="1.5"></i>Deactivate user</button>
+            <div style="display:flex;gap:10px">
+              <button onClick="{{ backToList }}" style="{{ secondaryButtonStyle }}">Cancel</button>
+              <button onClick="{{ backToList }}" style="{{ primaryButtonStyle }}">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- AUDIT LIST -->
+      <sc-if value="{{ showAuditList }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);overflow-x:auto">
+          <table style="min-width:720px">
+            <thead>
+              <tr style="background:var(--color-mist)">
+                <th style="{{ thStyle }}">Timestamp</th>
+                <th style="{{ thStyle }}">User</th>
+                <th style="{{ thStyle }}">Action</th>
+                <th style="{{ thStyle }}">Entity</th>
+                <th style="{{ thStyle }}">Severity</th>
+                <th style="{{ thStyle }}"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ auditEntries }}" as="a" hint-placeholder-count="7">
+                <tr onClick="{{ a.open }}" style="{{ rowStyle }}">
+                  <td style="{{ tdStyle }};color:var(--color-fg-2);white-space:nowrap">{{ a.timestamp }}</td>
+                  <td style="{{ tdStyle }};font-weight:500">{{ a.user }}</td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ a.action }}</td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ a.entity }}</td>
+                  <td style="{{ tdStyle }}"><span style="{{ a.severityPillStyle }}">{{ a.severity }}</span></td>
+                  <td style="{{ tdStyle }};text-align:right"><i data-lucide="chevron-right" class="egs-i" stroke-width="1.5" style="color:var(--color-fg-3)"></i></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <!-- AUDIT DETAIL -->
+      <!-- ROLES LIST -->
+      <sc-if value="{{ showRolesList }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);overflow-x:auto">
+          <table style="min-width:720px">
+            <thead>
+              <tr style="background:var(--color-mist)">
+                <th style="{{ thStyle }}">Role</th>
+                <th style="{{ thStyle }}">Description</th>
+                <th style="{{ thStyle }}">Users</th>
+                <th style="{{ thStyle }}"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ roles }}" as="r" hint-placeholder-count="4">
+                <tr onClick="{{ r.open }}" style="{{ rowStyle }}">
+                  <td style="{{ tdStyle }};font-weight:500">{{ r.name }}</td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ r.description }}</td>
+                  <td style="{{ tdStyle }};color:var(--color-fg-2)">{{ r.userCount }}</td>
+                  <td style="{{ tdStyle }};text-align:right"><i data-lucide="chevron-right" class="egs-i" stroke-width="1.5" style="color:var(--color-fg-3)"></i></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <!-- ROLE DETAIL -->
+      <sc-if value="{{ showRoleDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:720px;background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:32px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;margin-bottom:28px">
+            <div><div style="{{ labelStyle }}">Role name</div><input type="text" value="{{ selectedRole.name }}" /></div>
+            <div><div style="{{ labelStyle }}">Assigned users</div><div style="{{ readonlyStyle }}">{{ selectedRole.userCount }}</div></div>
+            <div style="grid-column:span 2"><div style="{{ labelStyle }}">Description</div><input type="text" value="{{ selectedRole.description }}" /></div>
+          </div>
+          <div style="{{ labelStyle }};margin-bottom:10px">Permissions</div>
+          <div style="border:1px solid var(--color-border);border-radius:var(--radius-sm);overflow-x:auto">
+            <table style="min-width:480px">
+              <thead>
+                <tr style="background:var(--color-mist)">
+                  <th style="{{ thStyle }}">Module</th>
+                  <th style="{{ thStyle }};text-align:center">View</th>
+                  <th style="{{ thStyle }};text-align:center">Create</th>
+                  <th style="{{ thStyle }};text-align:center">Edit</th>
+                  <th style="{{ thStyle }};text-align:center">Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ selectedRole.matrix }}" as="row" hint-placeholder-count="4">
+                  <tr>
+                    <td style="{{ tdStyle }};font-weight:500">{{ row.resource }}</td>
+                    <td style="{{ tdStyle }};text-align:center"><input type="checkbox" defaultChecked="{{ row.view }}" style="width:16px;height:16px;accent-color:var(--color-purple)" /></td>
+                    <td style="{{ tdStyle }};text-align:center"><input type="checkbox" defaultChecked="{{ row.create }}" style="width:16px;height:16px;accent-color:var(--color-purple)" /></td>
+                    <td style="{{ tdStyle }};text-align:center"><input type="checkbox" defaultChecked="{{ row.edit }}" style="width:16px;height:16px;accent-color:var(--color-purple)" /></td>
+                    <td style="{{ tdStyle }};text-align:center"><input type="checkbox" defaultChecked="{{ row.delete }}" style="width:16px;height:16px;accent-color:var(--color-purple)" /></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--color-border)">
+            <button style="{{ deleteButtonStyle }}"><i data-lucide="trash-2" class="egs-i" stroke-width="1.5"></i>Delete role</button>
+            <div style="display:flex;gap:10px">
+              <button onClick="{{ backToList }}" style="{{ secondaryButtonStyle }}">Cancel</button>
+              <button onClick="{{ backToList }}" style="{{ primaryButtonStyle }}">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showAuditDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:680px;background:var(--color-white);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:32px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+            <div>
+              <div style="font-size:18px;font-weight:600">{{ selectedAudit.action }}</div>
+              <div style="color:var(--color-fg-3);font-size:13px;margin-top:2px">{{ selectedAudit.timestamp }}</div>
+            </div>
+            <span style="{{ selectedAudit.severityPillStyle }}">{{ selectedAudit.severity }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+            <div><div style="{{ labelStyle }}">User</div><div style="{{ readonlyStyle }}">{{ selectedAudit.user }}</div></div>
+            <div><div style="{{ labelStyle }}">IP address</div><div style="{{ readonlyStyle }}">{{ selectedAudit.ip }}</div></div>
+            <div style="grid-column:span 2"><div style="{{ labelStyle }}">Entity / target</div><div style="{{ readonlyStyle }}">{{ selectedAudit.entity }}</div></div>
+          </div>
+          <div style="{{ labelStyle }}">Change detail</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+            <div style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px 14px;background:var(--color-error-bg)">
+              <div style="font-size:11px;font-weight:600;color:var(--color-error);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Before</div>
+              <div style="font-family:var(--font-mono);font-size:13px;color:var(--color-fg-1)">{{ selectedAudit.before }}</div>
+            </div>
+            <div style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px 14px;background:var(--color-success-bg)">
+              <div style="font-size:11px;font-weight:600;color:var(--color-success);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">After</div>
+              <div style="font-family:var(--font-mono);font-size:13px;color:var(--color-fg-1)">{{ selectedAudit.after }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CURRENT_USER = { name: 'Duc Nguyen', email: 'duc.nguyen@eastgate-software.com', phone: '+84 90 123 4567', status: 'Active', lastLogin: 'Sep 10, 2026, 8:02 AM', created: 'Jan 10, 2025' };
+
+const USERS = [
+  { id: 'u1', name: 'Duc Nguyen', email: 'duc.nguyen@eastgate-software.com', lastActive: '2 minutes ago' },
+  { id: 'u2', name: 'Linh Vo', email: 'linh.vo@eastgate-software.com', lastActive: '1 hour ago' },
+  { id: 'u3', name: 'Hai Tran', email: 'hai.tran@eastgate-software.com', lastActive: 'Yesterday, 5:40 PM' },
+  { id: 'u4', name: 'Yen Bui', email: 'yen.bui@eastgate-software.com', lastActive: 'Sep 7, 2026' },
+];
+
+const FILES = [
+  { id: 'f1', name: 'Master Services Agreement.pdf', icon: 'file-text', size: '2.4 MB', owner: 'Le Thi Mai', modified: 'Sep 8, 2026' },
+  { id: 'f2', name: 'Onboarding checklist.docx', icon: 'file-text', size: '184 KB', owner: 'Duc Nguyen', modified: 'Sep 6, 2026' },
+  { id: 'f3', name: 'Q3 renewal terms.xlsx', icon: 'file-spreadsheet', size: '512 KB', owner: 'Tran Van Hung', modified: 'Sep 3, 2026' },
+  { id: 'f4', name: 'Site plan diagram.png', icon: 'image', size: '3.1 MB', owner: 'Pham Thu Huong', modified: 'Aug 29, 2026' },
+  { id: 'f5', name: 'NDA - signed.pdf', icon: 'file-text', size: '640 KB', owner: 'Linh Vo', modified: 'Aug 22, 2026' },
+];
+
+const ROLES = [
+  { id: 'r1', name: 'Administrator', description: 'Full access to all modules and settings', userCount: 2,
+    matrix: [
+      { resource: 'My Profiles', view: true, create: true, edit: true, delete: true },
+      { resource: 'File Management', view: true, create: true, edit: true, delete: true },
+      { resource: 'User Management', view: true, create: true, edit: true, delete: true },
+      { resource: 'Audit Log', view: true, create: false, edit: false, delete: false },
+    ] },
+  { id: 'r2', name: 'Manager', description: 'Manages profiles and files, no user administration', userCount: 5,
+    matrix: [
+      { resource: 'My Profiles', view: true, create: true, edit: true, delete: false },
+      { resource: 'File Management', view: true, create: true, edit: true, delete: false },
+      { resource: 'User Management', view: false, create: false, edit: false, delete: false },
+      { resource: 'Audit Log', view: false, create: false, edit: false, delete: false },
+    ] },
+  { id: 'r3', name: 'Editor', description: 'Can edit profiles and files, cannot delete', userCount: 8,
+    matrix: [
+      { resource: 'My Profiles', view: true, create: true, edit: true, delete: false },
+      { resource: 'File Management', view: true, create: true, edit: true, delete: false },
+      { resource: 'User Management', view: false, create: false, edit: false, delete: false },
+      { resource: 'Audit Log', view: false, create: false, edit: false, delete: false },
+    ] },
+  { id: 'r4', name: 'Viewer', description: 'Read-only access to profiles and files', userCount: 14,
+    matrix: [
+      { resource: 'My Profiles', view: true, create: false, edit: false, delete: false },
+      { resource: 'File Management', view: true, create: false, edit: false, delete: false },
+      { resource: 'User Management', view: false, create: false, edit: false, delete: false },
+      { resource: 'Audit Log', view: false, create: false, edit: false, delete: false },
+    ] },
+];
+
+const AUDIT = [
+  { id: 'a1', timestamp: 'Sep 10, 2026, 8:14 AM', user: 'Duc Nguyen', action: 'Updated profile', entity: 'Profile · Pham Thu Huong', ip: '203.113.44.12', severity: 'Info', before: 'status: Inactive', after: 'status: Active' },
+  { id: 'a2', timestamp: 'Sep 9, 2026, 6:02 PM', user: 'Linh Vo', action: 'Deleted file', entity: 'File · Draft SOW v2.docx', ip: '203.113.44.51', severity: 'Warning', before: 'file: present', after: 'file: deleted' },
+  { id: 'a3', timestamp: 'Sep 9, 2026, 11:20 AM', user: 'System', action: 'Failed login attempt', entity: 'User · hai.tran@eastgate-software.com', ip: '118.70.22.9', severity: 'Error', before: 'session: none', after: 'session: none' },
+  { id: 'a4', timestamp: 'Sep 8, 2026, 3:45 PM', user: 'Hai Tran', action: 'Uploaded file', entity: 'File · Master Services Agreement.pdf', ip: '203.113.44.30', severity: 'Info', before: '—', after: 'file: created' },
+  { id: 'a5', timestamp: 'Sep 7, 2026, 9:10 AM', user: 'Duc Nguyen', action: 'Changed permissions', entity: 'User · Yen Bui', ip: '203.113.44.12', severity: 'Warning', before: 'role: Viewer', after: 'role: Editor' },
+  { id: 'a6', timestamp: 'Sep 5, 2026, 4:52 PM', user: 'Yen Bui', action: 'Created profile', entity: 'Profile · Do Minh Quan', ip: '14.161.3.88', severity: 'Info', before: '—', after: 'profile: created' },
+];
+
+const NAV_BASE = 'display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:6px;color:var(--color-ink-300);font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms,color 150ms';
+const NAV_ACTIVE = 'display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:6px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;background:rgba(255,255,255,0.1)';
+
+const TH = 'text-align:left;padding:13px 20px;font-size:12px;font-weight:600;color:var(--color-fg-3);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--color-border)';
+const TD = 'padding:14px 20px;font-size:14px;border-bottom:1px solid var(--color-border);white-space:nowrap';
+const ROW = 'cursor:pointer;transition:background 150ms';
+const LABEL = 'font-size:12px;font-weight:600;color:var(--color-fg-3);margin-bottom:6px';
+const READONLY = 'font-size:14px;color:var(--color-fg-2);padding:9px 0';
+const PRIMARY_BTN = 'background:var(--color-purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer';
+const SECONDARY_BTN = 'display:flex;align-items:center;gap:6px;background:none;color:var(--color-fg-2);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer';
+const DELETE_BTN = 'display:flex;align-items:center;gap:6px;background:none;color:var(--color-error);border:none;font-size:14px;font-weight:500;cursor:pointer;padding:0';
+
+function pill(bg, fg, label) {
+  return `display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;background:${bg};color:${fg}`;
+}
+
+class Component extends DCLogic {
+  state = { screen: 'profiles', view: 'list', selectedId: null };
+
+  componentDidMount() { if (window.lucide) window.lucide.createIcons(); }
+  componentDidUpdate() { if (window.lucide) window.lucide.createIcons(); }
+
+  go(screen) { this.setState({ screen, view: 'list', selectedId: null }); }
+  open(id) { this.setState({ view: 'detail', selectedId: id }); }
+  back() { this.setState({ view: 'list', selectedId: null }); }
+
+  renderVals() {
+    const { screen, view, selectedId } = this.state;
+    const isList = view === 'list';
+    const isDetail = view === 'detail';
+    const isFiles = screen === 'files';
+    const isAudit = screen === 'audit';
+
+    const titles = { profiles: 'My Profile', files: 'File Management', users: 'User Management', audit: 'Audit Log', roles: 'Roles & Permissions' };
+    const crumbs = { profiles: 'CRM', files: 'CRM', users: 'CRM · Administration', audit: 'CRM · Administration', roles: 'CRM · Administration' };
+    const createLabels = { profiles: 'New profile', files: '', users: 'New user', audit: '', roles: 'New role' };
+    const searchPh = { profiles: 'Search profiles…', files: 'Search files…', users: 'Search users…', audit: 'Search audit log…', roles: 'Search roles…' };
+
+    const myProfile = { ...CURRENT_USER, initials: CURRENT_USER.name.split(' ').map(w => w[0]).slice(0, 2).join(''), statusPillStyle: pill('var(--color-success-bg)', 'var(--color-success)') };
+    const users = USERS.map(u => ({
+      ...u,
+      initials: u.name.split(' ').map(w => w[0]).slice(0, 2).join(''),
+      open: () => this.open(u.id),
+    }));
+    const files = FILES.map(f => ({ ...f, open: () => this.open(f.id) }));
+    const sevStyle = s => s === 'Error' ? pill('var(--color-error-bg)', 'var(--color-error)') : s === 'Warning' ? pill('var(--color-warning-bg)', 'var(--color-warning)') : pill('var(--color-mist)', 'var(--color-fg-2)');
+    const auditEntries = AUDIT.map(a => ({ ...a, severityPillStyle: sevStyle(a.severity), open: () => this.open(a.id) }));
+    const roles = ROLES.map(r => ({ ...r, open: () => this.open(r.id) }));
+
+    const blankUser = { initials: '+', name: '', email: '', lastActive: '—' };
+    const selectedUser = users.find(u => u.id === selectedId) || blankUser;
+    const selectedFile = files.find(f => f.id === selectedId);
+    const selectedAudit = auditEntries.find(a => a.id === selectedId);
+    const blankRole = { name: '', description: '', userCount: 0, matrix: [
+      { resource: 'My Profiles', view: false, create: false, edit: false, delete: false },
+      { resource: 'File Management', view: false, create: false, edit: false, delete: false },
+      { resource: 'User Management', view: false, create: false, edit: false, delete: false },
+      { resource: 'Audit Log', view: false, create: false, edit: false, delete: false },
+    ] };
+    const selectedRole = roles.find(r => r.id === selectedId) || blankRole;
+
+    return {
+      pageTitle: titles[screen], breadcrumb: crumbs[screen], createLabel: createLabels[screen], searchPlaceholder: searchPh[screen],
+      isList, isDetail, isFiles, isNotFiles: !isFiles, isAudit, isNotAudit: !isAudit,
+      showProfileDetail: screen === 'profiles',
+      showListActions: isList && screen !== 'profiles',
+      showBackButton: isDetail && screen !== 'profiles',
+      showFilesList: isFiles && isList, showFileDetail: isFiles && isDetail,
+      showUsersList: screen === 'users' && isList, showUserDetail: screen === 'users' && isDetail,
+      showAuditList: isAudit && isList, showAuditDetail: isAudit && isDetail,
+      showRolesList: screen === 'roles' && isList, showRoleDetail: screen === 'roles' && isDetail,
+      navItemStyle_profiles: screen === 'profiles' ? NAV_ACTIVE : NAV_BASE,
+      navItemStyle_files: screen === 'files' ? NAV_ACTIVE : NAV_BASE,
+      navItemStyle_users: screen === 'users' ? NAV_ACTIVE : NAV_BASE,
+      navItemStyle_audit: screen === 'audit' ? NAV_ACTIVE : NAV_BASE,
+      navItemStyle_roles: screen === 'roles' ? NAV_ACTIVE : NAV_BASE,
+      goToProfiles: () => this.go('profiles'), goToFiles: () => this.go('files'), goToUsers: () => this.go('users'), goToAudit: () => this.go('audit'), goToRoles: () => this.go('roles'),
+      backToList: () => this.back(), createNew: () => this.open(null),
+      users, files, auditEntries, roles, selectedProfile: myProfile, selectedUser, selectedFile, selectedAudit, selectedRole,
+      thStyle: TH, tdStyle: TD, rowStyle: ROW, labelStyle: LABEL, readonlyStyle: READONLY,
+      primaryButtonStyle: PRIMARY_BTN, secondaryButtonStyle: SECONDARY_BTN, deleteButtonStyle: DELETE_BTN,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

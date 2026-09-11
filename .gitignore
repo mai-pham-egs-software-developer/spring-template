@@ -19,6 +19,19 @@ frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
 
+# --- operator-frontend/ (Node / Vite) ---
+operator-frontend/node_modules/
+operator-frontend/dist/
+operator-frontend/dist-ssr/
+operator-frontend/*.local
+operator-frontend/logs
+operator-frontend/*.log
+operator-frontend/npm-debug.log*
+operator-frontend/yarn-debug.log*
+operator-frontend/yarn-error.log*
+operator-frontend/pnpm-debug.log*
+operator-frontend/lerna-debug.log*
+
 # --- IDE (any folder) ---
 .idea/
 *.iml
