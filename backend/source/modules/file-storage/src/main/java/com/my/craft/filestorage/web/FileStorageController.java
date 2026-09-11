@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.my.craft.security.user.CustomAuthenticationToken;
-import com.my.craft.security.user.UserContext;
+import com.my.craft.security.security.CustomAuthenticationToken;
+import com.my.craft.security.security.UserContextUtils;
 
 import com.my.craft.filestorage.service.FileStorageService;
 import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
@@ -27,8 +26,8 @@ import com.my.craft.filestorage.service.dto.UploadUrlResponse;
 /**
  * {@code /api/files/**} already falls under the {@code auth-type: BEARER} rule in
  * application.yml's {@code security:} list -- see modules/security -- so every request here
- * already carries an authenticated {@link CustomAuthenticationToken}; {@link #actorOf} just reads
- * the {@link UserContext} it enriched the request with, the same way {@code MeController} does.
+ * already carries an authenticated {@link CustomAuthenticationToken}; {@link UserContextUtils}
+ * reads it off {@code SecurityContextHolder} for us.
  */
 @RestController
 @RequestMapping("/api/files")
@@ -41,38 +40,29 @@ public class FileStorageController {
     }
 
     @GetMapping
-    public List<FileSummaryResponse> list(Authentication authentication) {
-        return fileStorageService.listFiles(actorOf(authentication));
+    public List<FileSummaryResponse> list() {
+        return fileStorageService.listFiles(UserContextUtils.currentUserContext());
     }
 
     @PostMapping("/presign-upload")
-    public UploadUrlResponse presignUpload(@Valid @RequestBody CreateUploadRequest request, Authentication authentication) {
-        return fileStorageService.createUploadUrl(request, actorOf(authentication));
+    public UploadUrlResponse presignUpload(@Valid @RequestBody CreateUploadRequest request) {
+        return fileStorageService.createUploadUrl(request, UserContextUtils.currentUserContext());
     }
 
     @GetMapping("/{fileId}/presign-download")
-    public DownloadUrlResponse presignDownload(@PathVariable UUID fileId, Authentication authentication) {
-        return fileStorageService.createDownloadUrl(fileId, actorOf(authentication));
+    public DownloadUrlResponse presignDownload(@PathVariable UUID fileId) {
+        return fileStorageService.createDownloadUrl(fileId, UserContextUtils.currentUserContext());
     }
 
     @PostMapping("/{fileId}/confirm")
-    public ResponseEntity<Void> confirm(
-            @PathVariable UUID fileId, @Valid @RequestBody ConfirmUploadRequest request, Authentication authentication) {
-        fileStorageService.confirm(fileId, request, actorOf(authentication));
+    public ResponseEntity<Void> confirm(@PathVariable UUID fileId, @Valid @RequestBody ConfirmUploadRequest request) {
+        fileStorageService.confirm(fileId, request, UserContextUtils.currentUserContext());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{fileId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID fileId, Authentication authentication) {
-        fileStorageService.delete(fileId, actorOf(authentication));
+    public ResponseEntity<Void> delete(@PathVariable UUID fileId) {
+        fileStorageService.delete(fileId, UserContextUtils.currentUserContext());
         return ResponseEntity.noContent().build();
-    }
-
-    private static UserContext actorOf(Authentication authentication) {
-        if (!(authentication instanceof CustomAuthenticationToken customAuthentication)) {
-            throw new IllegalStateException(
-                    "Expected a CustomAuthenticationToken -- is UserContextEnrichmentFilter registered on this chain?");
-        }
-        return customAuthentication.getUserContext();
     }
 }

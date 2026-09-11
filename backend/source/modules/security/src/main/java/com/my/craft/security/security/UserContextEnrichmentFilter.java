@@ -1,4 +1,4 @@
-package com.my.craft.security.user;
+package com.my.craft.security.security;
 
 import java.io.IOException;
 

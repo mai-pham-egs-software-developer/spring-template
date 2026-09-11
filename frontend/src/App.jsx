@@ -5,6 +5,8 @@ import { CrmLayout } from "./layout/CrmLayout";
 import { Home } from "./pages/Home";
 import { AuditDetailPage } from "./pages/crm/AuditDetailPage";
 import { AuditLogPage } from "./pages/crm/AuditLogPage";
+import { CasbinModelConfigPage } from "./pages/crm/CasbinModelConfigPage";
+import { CasbinPoliciesPage } from "./pages/crm/CasbinPoliciesPage";
 import { FileDetailPage } from "./pages/crm/FileDetailPage";
 import { FilesPage } from "./pages/crm/FilesPage";
 import { ProfilePage } from "./pages/crm/ProfilePage";
@@ -35,6 +37,8 @@ function App() {
             <Route path="audit-log/:auditId" element={<AuditDetailPage />} />
             <Route path="roles" element={<RolesPage />} />
             <Route path="roles/:roleId" element={<RoleDetailPage />} />
+            <Route path="casbin-policies" element={<CasbinPoliciesPage />} />
+            <Route path="casbin-model-config" element={<CasbinModelConfigPage />} />
             <Route path="api-demo" element={<Home />} />
           </Route>
         </Routes>

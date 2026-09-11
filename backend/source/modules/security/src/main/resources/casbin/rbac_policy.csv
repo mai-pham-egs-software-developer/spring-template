@@ -1,7 +1,9 @@
-# One-time seed only -- loaded into the casbin_rule table by CasbinConfig the first time it's
-# empty. After that, policy lives in the DB; edit it via CasbinPolicyController (or the table
-# directly + POST /api/admin/casbin/reload), not this file. See docs/security.md.
-p, admin, /api/admin/casbin/*, *
+# One-time seed only -- loaded into the casbin_rule table by CasbinPolicySeeder the first time
+# it's empty. After that, policy lives in the DB; edit it via CasbinPolicyController (or the table
+# directly + POST /operators/casbin/reload), not this file. See docs/security.md.
+p, admin, /operators/casbin/*, *
+p, admin, /operators/organizations, *
+p, admin, /operators/organizations/*, *
 p, admin, /api/users/*, *
 p, editor, /api/articles/*, GET
 p, editor, /api/articles/*, POST

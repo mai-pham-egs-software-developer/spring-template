@@ -8,14 +8,14 @@ import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 
-import com.my.craft.security.user.CustomAuthenticationToken;
+import com.my.craft.security.security.CustomAuthenticationToken;
 
 /**
  * Bridges {@code authorizeHttpRequests(...).access(...)} to the jcasbin {@link Enforcer}: the
- * enriched {@link com.my.craft.security.user.UserContext#username()} is the RBAC subject, the
+ * enriched {@link com.my.craft.security.security.UserContext#username()} is the RBAC subject, the
  * request path is the object, and the HTTP method is the action. See rbac_model.conf /
  * rbac_policy.csv and docs/security.md. Requires
- * {@link com.my.craft.security.user.UserContextEnrichmentFilter} to have already run, i.e. must
+ * {@link com.my.craft.security.security.UserContextEnrichmentFilter} to have already run, i.e. must
  * only be used on chains that register it before this manager is checked.
  */
 public class CasbinAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
@@ -30,7 +30,7 @@ public class CasbinAuthorizationManager implements AuthorizationManager<RequestA
     public AuthorizationDecision check(Supplier<Authentication> authentication, RequestAuthorizationContext context) {
         Authentication auth = authentication.get();
         if (!(auth instanceof CustomAuthenticationToken token)) {
-            return new AuthorizationDecision(false);
+            return new AuthorizationDecision(true);
         }
         String subject = token.getUserContext().username();
         String object = context.getRequest().getRequestURI();

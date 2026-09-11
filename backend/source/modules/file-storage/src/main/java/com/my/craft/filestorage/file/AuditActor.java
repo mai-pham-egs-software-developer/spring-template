@@ -1,6 +1,6 @@
 package com.my.craft.filestorage.file;
 
-import com.my.craft.security.user.UserContext;
+import com.my.craft.security.security.UserContext;
 
 /**
  * Who performed an auditable action on a {@link StoredFile} (upload, confirm, ...). Trimmed down

@@ -99,10 +99,12 @@ example of consuming this.
   with `cannot access jakarta.servlet.http.HttpServletRequest`. Scope is `provided` because the
   real servlet container comes from whichever app imports this module (e.g. `applications/main`
   via its own `spring-boot-starter-web`) at runtime — this module never runs standalone.
-- `org.casbin:jcasbin` — RBAC enforcement engine backing `CasbinConfig` / `CasbinAuthorizationManager`
-  (see "RBAC authorization (jcasbin)" below).
-- `spring-boot-starter-data-jpa` + `postgresql` (`runtime`) — back `JpaCasbinRuleAdapter`, the
-  `casbin_rule` table that makes policy DB-backed instead of file-backed.
+- `org.casbin:casbin-spring-boot-starter` — builds the jcasbin `Enforcer`/`Adapter` beans backing
+  `CasbinAuthorizationManager` from the `casbin:` block in `application.yml` (see "RBAC
+  authorization (jcasbin)" below); brings jcasbin itself transitively.
+- `spring-boot-starter-data-jpa` + `postgresql` (`runtime`) — the JDBC `Adapter` reuses this
+  module's own Postgres `DataSource` for the `casbin_rule` table; also backs the unrelated
+  `User`/`AdminRole`/`Permission` entities (`com.my.craft.security.models`).
 
 ## ⚠️ `defaultSecurityFilterChain` must always exist
 
@@ -140,23 +142,33 @@ AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<
         .anyRequest().access(rbac))
 ```
 
-- **`rbac_model.conf`** (classpath, fixed at startup) — a standard RBAC model: `sub`
-  (subject/role), `obj` (resource, matched with `keyMatch2`: `/api/users/*` matches
+- **`rbac_model.conf`** (classpath, `casbin.model` in `application.yml`) — a standard RBAC model:
+  `sub` (subject/role), `obj` (resource, matched with `keyMatch2`: `/api/users/*` matches
   `/api/users/123` AND `/api/users/123/roles` — unlike the Ant patterns used elsewhere in this
   module, jcasbin's `*` matches across `/`, i.e. behaves like Ant's `**`), `act` (HTTP method, or
-  `*` for any method).
+  `*` for any method). Set explicitly because casbin-spring-boot-starter's own default model (used
+  if `casbin.model` is unset) matches `obj` with plain equality, not `keyMatch2`.
+- **The model itself is also DB-backed past startup**, table `casbin_model_config`
+  (`CasbinModelConfig`/`CasbinModelConfigJpaRepository`, `com.my.craft.security.models`/
+  `repository`). `CasbinModelConfigInitializer` (`com.my.craft.security.authz`, an
+  `ApplicationRunner`, `@Order(1)`) seeds that table from `rbac_model.conf` on first boot; on every
+  later boot it instead parses the stored row and applies it to the `Enforcer` via `setModel` +
+  `loadPolicy()` — so a model edited through `CasbinPolicyController`'s `/config` endpoint survives
+  a restart, and `rbac_model.conf` only matters for the very first boot against an empty DB.
 - **Policy itself is DB-backed, not file-backed** — the whole point being that it can change at
-  runtime. `CasbinConfig` builds the `Enforcer` from `rbac_model.conf` (still a classpath resource,
-  copied to a temp file once at startup since jcasbin's model loader needs a real filesystem path)
-  plus a `JpaCasbinRuleAdapter`, backed by the `casbin_rule` table (`CasbinRuleEntity` /
-  `CasbinRuleJpaRepository`, `com.my.craft.security.authz.jpa`). That table name/shape (`ptype`,
-  `v0`..`v5`) is the schema every official Casbin adapter (Go, Node, the JDBC adapter, ...) uses,
-  so any Casbin-aware admin tool can read/write it directly too.
-- **`rbac_policy.csv` is a one-time seed, not the live source of policy.** `CasbinConfig` only
-  reads it if `casbin_rule` is empty (first boot against a fresh DB) — it parses the CSV with
-  jcasbin's own `FileAdapter` into a throwaway `Model`, then writes that through
-  `JpaCasbinRuleAdapter.savePolicy(...)` into the table. After that, editing the CSV does nothing;
-  change policy via `CasbinPolicyController` (below) or by writing to `casbin_rule` yourself.
+  runtime. casbin-spring-boot-starter builds the `Enforcer`/`Adapter` beans from the `casbin:`
+  block in `application.yml` (`store-type: jdbc`, `table-name: casbin_rule`,
+  `initialize-schema: create`), reusing this module's own Postgres `DataSource`. That table
+  name/shape (`ptype`, `v0`..`v5`) is the schema every official Casbin adapter (Go, Node, the JDBC
+  adapter, ...) uses, so any Casbin-aware admin tool can read/write it directly too.
+- **`rbac_policy.csv` is a one-time seed, not the live source of policy.** `CasbinPolicySeeder`
+  (`com.my.craft.security.authz`, an `ApplicationRunner`) only reads it if `casbin_rule` is empty
+  (first boot against a fresh DB) — it reads the CSV itself (plain line splitting, no jcasbin file
+  adapter involved) and adds each row straight through `Enforcer.addPolicy`/`addGroupingPolicy`,
+  the same DB-adapter path `CasbinPolicyController` uses for a user-triggered change. With
+  auto-save on (the starter's default) each call persists immediately through the JDBC `Adapter`.
+  After that, editing the CSV does nothing; change policy via `CasbinPolicyController` (below) or
+  by writing to `casbin_rule` yourself.
 - **`p` rows** are the actual grants (`role, path pattern, method`); **`g` rows** assign a role to
   a subject (`g, <username>, <role>`). `CasbinAuthorizationManager` calls
   `enforcer.enforce(subject, object, action)` with `subject` = `CustomAuthenticationToken`'s
@@ -180,22 +192,28 @@ AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<
 ### Changing policy at runtime
 
 `CasbinPolicyController` (`com.my.craft.security.authz.web`, itself served at
-`/api/admin/casbin/*` — `BEARER`-protected like every `/api/**` path, and RBAC-protected by the
-seeded `p, admin, /api/admin/casbin/*, *` row, so only an `admin` subject can reach it):
+`/operators/casbin/*` — `BEARER`-protected like every `/operators/**` path, and RBAC-protected by
+the seeded `p, admin, /operators/casbin/*, *` row, so only an `admin` subject can reach it).
+
+**Policy rows are dynamic by `ptype`**, not one endpoint per row shape — a `ptype` starting with
+`g` (role/grouping assertions) is dispatched to jcasbin's `*GroupingPolicy` methods, anything else
+(`p`, or a further section like `p2` if `rbac_model.conf` ever grows one) to its `*Policy` methods,
+mirroring the `p`/`g` split jcasbin itself uses internally:
 
 | Endpoint | Effect |
 |---|---|
-| `GET /api/admin/casbin/policies` | List every `p` row (`enforcer.getPolicy()`). |
-| `POST /api/admin/casbin/policies` | Add a `p` row — `{"role", "pathPattern", "method"}`. |
-| `DELETE /api/admin/casbin/policies` | Remove a `p` row (exact match on all three fields). |
-| `GET /api/admin/casbin/roles` | List every `g` row (`enforcer.getGroupingPolicy()`). |
-| `POST /api/admin/casbin/roles` | Assign a role — `{"username", "role"}`. |
-| `DELETE /api/admin/casbin/roles` | Remove a role assignment. |
-| `POST /api/admin/casbin/reload` | Re-read `casbin_rule` from the DB. |
+| `GET /operators/casbin/policies?ptype=p` | List every row of that `ptype` (`ptype` defaults to `p`; use `g` for role assignments). |
+| `POST /operators/casbin/policies` | Add a row — `{"ptype", "params": [...]}` (e.g. `{"ptype":"p","params":["admin","/x/*","GET"]}` or `{"ptype":"g","params":["alice","admin"]}`). |
+| `PUT /operators/casbin/policies` | Replace one row's params — `{"ptype", "oldParams": [...], "newParams": [...]}`. |
+| `DELETE /operators/casbin/policies` | Remove a row (exact match on `ptype` + `params`). |
+| `POST /operators/casbin/reload` | Re-read `casbin_rule` from the DB. |
+| `GET /operators/casbin/config` | Read the current RBAC model definition (the `sub, obj, act` / matcher text), from table `casbin_model_config`. |
+| `PUT /operators/casbin/config` | Replace it — `{"content": "..."}`. Parses into a fresh `Model`, swaps it into the running `Enforcer` (`setModel` + `loadPolicy()`), then persists — a syntactically broken model fails the request instead of getting stored. |
 
-Calls through `Enforcer`'s management API (`addPolicy`/`removePolicy`/`addRoleForUser`/...) update
-*both* this instance's in-memory copy and the `casbin_rule` table immediately (jcasbin's
-Auto-Save feature, on by default) — that's the supported way to change policy without a redeploy.
+Calls through `Enforcer`'s management API (`addNamedPolicy`/`removeNamedPolicy`/
+`addNamedGroupingPolicy`/...) update *both* this instance's in-memory copy and the `casbin_rule`
+table immediately (jcasbin's Auto-Save feature, on by default) — that's the supported way to
+change policy without a redeploy.
 Writing to `casbin_rule` some other way (psql, a migration, another service) skips the in-memory
 side: an already-running `Enforcer` won't see it until something calls `/reload` (or the instance
 restarts). Running multiple instances has the same gap between them — jcasbin's `Watcher`

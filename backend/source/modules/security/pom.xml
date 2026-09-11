@@ -44,14 +44,25 @@
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- RBAC enforcement engine backing CasbinAuthorizationManager. -->
+
+        <!-- Builds the Enforcer/Adapter beans: JDBC-backed policy storage (table casbin_rule) using
+             this module's own Postgres DataSource, so RBAC policy can change at runtime without a
+             redeploy, see docs/security.md.
+             CHANGE-ME: pinned to 1.9.0, NOT the latest (2.0.0) on purpose. 2.0.0's
+             CasbinAutoConfiguration is compiled against spring-boot-starter-parent 4.0.0 and
+             references org.springframework.boot.jdbc.autoconfigure.DataSourceProperties /
+             JdbcTemplateAutoConfiguration, packages that only exist in Boot 4 (Boot 4 moved these
+             out of spring-boot-autoconfigure). Against this module's Boot 3.5.16 parent that fails
+             at startup with NoClassDefFoundError. 1.9.0 targets the pre-move
+             org.springframework.boot.autoconfigure.jdbc.* package and works correctly here;
+             re-evaluate only if/when this project's own parent moves to Boot 4. -->
         <dependency>
             <groupId>org.casbin</groupId>
-            <artifactId>jcasbin</artifactId>
-            <version>1.99.0</version>
+            <artifactId>casbin-spring-boot-starter</artifactId>
+            <version>1.9.0</version>
         </dependency>
-        <!-- Backs JpaCasbinRuleAdapter, which stores casbin_rule rows so RBAC policy can change
-             at runtime (DB) instead of only via the bundled rbac_policy.csv seed file. -->
+        <!-- Backs User/AdminRole/Permission (com.my.craft.security.domain) unrelated to Casbin,
+             see SecurityJpaConfig. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -60,6 +71,20 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Admin REST API client for the target identity provider (Keycloak here), backs
+             KeycloakUserService / the master-account bootstrap. Separate from
+             spring-boot-starter-oauth2-client/-resource-server above, which only ever authenticate
+             end users against Keycloak, never manage it. -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>26.0.12</version>
         </dependency>
     </dependencies>
 </project>

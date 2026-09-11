@@ -32,7 +32,7 @@ spring:
           # you like; it is not a magic/reserved value.
           oidc:
             client-id: be-application
-            client-secret: tqcz8MZ637tflgS5Ycv7DAah311hbHNbzf2seFSeYROdz0BIvfLSxEIhsCNypinYgDUjuVOu2czaqWLfgJbCHY
+            client-secret: nB0B1jTGKNiUEWraPw0LFgCdyGJGfRgZcv0S31Ys5s3htFGjFaNbsCEW52gWqeKOCFd6LSrfWiO3fw2CqoiiGK
             scope: openid, profile, email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -61,12 +61,53 @@ security:
     auth-type: BASIC
     username: admin
     password: admin
+  - path: /operators/**
+    auth-type: BEARER
+  - path: /biz/**
+    auth-type: BEARER
   - path: /api/**
     auth-type: BEARER
+
+# RBAC policy storage for modules/security's Casbin enforcer (casbin-spring-boot-starter) --
+# JDBC-backed (table casbin_rule, in this same Postgres DB) instead of a static file, so policy
+# can change at runtime via CasbinPolicyController. model still comes from the bundled
+# rbac_model.conf (keyMatch2 path matching); rbac_policy.csv is only a one-time seed applied by
+# CasbinPolicySeeder when that table is empty. See docs/security.md.
+casbin:
+  model: classpath:casbin/rbac_model.conf
+  store-type: jdbc
+  table-name: casbin_rule
+  initialize-schema: create
+
+# Admin REST API connection to Keycloak (separate from the end-user OIDC/JWT config above) --
+# backs KeycloakUserService, in particular the master-account bootstrap below. Authenticates
+# against Keycloak's own "master" realm using the KC_BOOTSTRAP_ADMIN_USERNAME/PASSWORD from
+# infras/local/compose.yml; manages users in this app's own "bootstrap" realm.
+# CHANGE-ME: real admin credentials (ideally a confidential client + service account scoped to
+# just realm-management, not the bootstrap superuser) before any shared/non-local deployment.
+keycloak:
+  admin:
+    server-url: http://localhost:8080
+    admin-realm: master
+    realm: bootstrap
+    client-id: admin-cli
+    username: admin
+    password: admin
 
 app:
   cors:
     allowed-origins: http://localhost:5173
+
+  # MasterAccountInitializer ensures this account exists in Keycloak (created if missing,
+  # password reset, realm-role assigned) on every boot, so a fresh environment always has one
+  # working admin login. See docs/security.md.
+  # CHANGE-ME: change the password before any shared/non-local deployment.
+  master-account:
+    enabled: true
+    username: master
+    email: master@example.com
+    password: ChangeMe123!
+    realm-role: admin
 
 file-storage:
   bucket: my-bucket

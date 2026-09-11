@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.my.craft.security.user.UserContext;
+import com.my.craft.security.security.UserContext;
 
 import com.my.craft.filestorage.config.FileStorageProperties;
 import com.my.craft.filestorage.file.FileNotFoundException;

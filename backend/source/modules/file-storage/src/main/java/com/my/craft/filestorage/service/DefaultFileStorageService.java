@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.my.craft.security.user.UserContext;
+import com.my.craft.security.security.UserContext;
 
 import com.my.craft.filestorage.config.FileStorageProperties;
 import com.my.craft.filestorage.file.AuditActor;

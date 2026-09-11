@@ -3,7 +3,7 @@ package com.my.craft.filestorage.service;
 import java.util.List;
 import java.util.UUID;
 
-import com.my.craft.security.user.UserContext;
+import com.my.craft.security.security.UserContext;
 
 import com.my.craft.filestorage.service.dto.ConfirmUploadRequest;
 import com.my.craft.filestorage.service.dto.CreateUploadRequest;

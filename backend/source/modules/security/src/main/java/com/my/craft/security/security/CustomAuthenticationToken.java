@@ -1,4 +1,4 @@
-package com.my.craft.security.user;
+package com.my.craft.security.security;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;

@@ -43,8 +43,8 @@ import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.my.craft.security.authz.CasbinAuthorizationManager;
-import com.my.craft.security.user.UserContextEnrichmentFilter;
-import com.my.craft.security.user.UserService;
+import com.my.craft.security.security.UserContextEnrichmentFilter;
+import com.my.craft.security.security.UserService;
 
 @Configuration
 public class SecurityConfig {
