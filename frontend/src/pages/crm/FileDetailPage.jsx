@@ -48,7 +48,7 @@ export function FileDetailPage() {
   if (loading) {
     return (
       <div>
-        <ListPageHeader breadcrumb="CRM" title="File Management" action={<BackToListLink to="/files" />} />
+        <ListPageHeader breadcrumb="Operator Admin" title="File Management" action={<BackToListLink to="/files" />} />
         <p>Loading…</p>
       </div>
     );
@@ -57,7 +57,7 @@ export function FileDetailPage() {
   if (!file) {
     return (
       <div>
-        <ListPageHeader breadcrumb="CRM" title="File Management" action={<BackToListLink to="/files" />} />
+        <ListPageHeader breadcrumb="Operator Admin" title="File Management" action={<BackToListLink to="/files" />} />
         <p>{error ?? "File not found."}</p>
       </div>
     );
@@ -67,7 +67,7 @@ export function FileDetailPage() {
 
   return (
     <div>
-      <ListPageHeader breadcrumb="CRM" title="File Management" action={<BackToListLink to="/files" />} />
+      <ListPageHeader breadcrumb="Operator Admin" title="File Management" action={<BackToListLink to="/files" />} />
       {error && <p style={{ color: "var(--color-error)" }}>{error}</p>}
       <div style={card}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>

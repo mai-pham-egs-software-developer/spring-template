@@ -28,10 +28,15 @@ import com.my.craft.security.repository.CasbinModelConfigJpaRepository;
  * supported way to change policy without a redeploy. See docs/security.md.
  *
  * <p>This controller's own path ({@code /operators/casbin/*}) is itself BEARER + RBAC protected
- * (see {@code application.yml}'s {@code security:} list and {@code rbac_policy.csv}'s seeded
- * {@code p, admin, /operators/casbin/*, *} row) -- only a subject with the {@code admin} role can
- * reach it. In a real app, prefer a dedicated {@code casbin-admin} role over reusing {@code admin}
- * for this.
+ * (see {@code application.yml}'s {@code security:} list) -- reaching it needs a matching {@code
+ * p} row already in {@code casbin_rule} for the caller's {@code userId}/{@code orgId}. There is
+ * no bundled seed file, so on a fresh DB that row has to be inserted directly, matching {@code
+ * rbac_model.conf}'s 5-field {@code p = role, orgId, objectType, objectId, action} (this
+ * controller's own {@code objectType} is {@code "casbin"}, unannotated, so it actually falls
+ * back to the raw request path -- see {@code CasbinAuthorizationManager}): e.g. {@code p, admin,
+ * 0, /operators/casbin/*, *, *} plus a {@code g} row assigning some subject the {@code admin}
+ * role within org {@code 0} -- see docs/security.md. In a real app, prefer a dedicated {@code
+ * casbin-admin} role over reusing {@code admin} for this.
  *
  * <p><b>Policy rows ({@code /policies}) are dynamic by {@code ptype}</b> rather than one endpoint
  * per row shape: {@code rbac_model.conf} only defines {@code p} (grants) and {@code g} (role
@@ -96,8 +101,9 @@ public class CasbinPolicyController {
         enforcer.loadPolicy();
     }
 
-    /** The RBAC model definition (the {@code sub, obj, act} / matcher text), table {@code
-     * casbin_model_config} -- see {@link CasbinModelConfigInitializer} for how it gets there. */
+    /** The RBAC model definition (the {@code userId, orgId, objectType, objectId, action} /
+     * matcher text), table {@code casbin_model_config} -- see {@link CasbinModelConfigInitializer}
+     * for how it gets there. */
     @GetMapping("/config")
     public ModelConfigView getConfig() {
         return new ModelConfigView(modelConfigOrThrow().getContent());

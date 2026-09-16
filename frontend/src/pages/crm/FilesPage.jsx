@@ -43,7 +43,7 @@ export function FilesPage() {
   return (
     <div>
       <ListPageHeader
-        breadcrumb="CRM"
+        breadcrumb="Operator Admin"
         title="File Management"
         searchPlaceholder="Search files…"
         action={

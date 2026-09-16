@@ -1,6 +1,5 @@
 package com.my.craft.security.domain;
 
-import com.my.craft.security.domain.operator.AdminRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,8 +14,9 @@ import lombok.Setter;
 
 /**
  * One grantable permission -- table {@code permissions}. {@code resource} is the thing the
- * permission applies to (e.g. an API resource or feature area); {@link AdminRole} holds the
- * many-to-many to this via the {@code role_permissions} join table.
+ * permission applies to (e.g. an API resource or feature area); {@code actionType} is what may be
+ * done to it (e.g. {@code READ}/{@code WRITE}/{@code DELETE}); {@link Role} holds the
+ * many-to-many to this via the {@code role_permission} join table.
  */
 @Entity
 @Table(name = "permissions")
@@ -36,8 +36,13 @@ public class Permission {
     @Column(nullable = false)
     private String resource;
 
-    public Permission(String name, String resource) {
+    @Setter
+    @Column(nullable = false)
+    private String actionType;
+
+    public Permission(String name, String resource, String actionType) {
         this.name = name;
         this.resource = resource;
+        this.actionType = actionType;
     }
 }

@@ -1,5 +1,6 @@
 package com.my.craft.security.config;
 
+import com.my.craft.security.service.initial.MasterAccountInitializer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Getter;
@@ -7,7 +8,7 @@ import lombok.Setter;
 
 /**
  * Binds {@code app.master-account.*} -- the one account {@link
- * com.my.craft.security.service.MasterAccountInitializer} guarantees exists in the identity
+ * MasterAccountInitializer} guarantees exists in the identity
  * provider on every boot (created if missing, password reset, {@code realmRole} assigned),
  * whether that provider is Keycloak ({@link com.my.craft.security.service.KeycloakUserService})
  * or something else entirely (Cognito, ...) behind the same {@code UserService} port.

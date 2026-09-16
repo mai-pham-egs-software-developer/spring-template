@@ -19,6 +19,11 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Organization {
 
+    /** The one org {@code MasterAccountInitializer} guarantees exists, reserved outside the
+     * normal {@code IDENTITY} sequence (which starts at 1) so it never collides with one a real
+     * caller creates through {@code OrganizationController}. */
+    public static final long MASTER_ID = 0L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

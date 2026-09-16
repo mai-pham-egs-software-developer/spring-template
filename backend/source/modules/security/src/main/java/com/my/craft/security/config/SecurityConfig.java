@@ -41,6 +41,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.my.craft.security.authz.CasbinAuthorizationManager;
 import com.my.craft.security.security.UserContextEnrichmentFilter;
@@ -57,6 +58,18 @@ public class SecurityConfig {
     @Bean
     @ConfigurationProperties(prefix = "security")
     public List<SecurityRuleProperties> securityRules() {
+        return new ArrayList<>();
+    }
+
+    // Ant-style path patterns (e.g. "/operators/health/**") that skip CasbinAuthorizationManager
+    // entirely -- still authenticated (AuthenticatedAuthorizationManager.authenticated() below
+    // still runs), just never org/role/permission-checked. /me itself doesn't need to be listed
+    // here: it isn't matched by any BEARER path in the `security:` list above, so it never even
+    // reaches this chain -- this is for something that DOES need to sit under one of those
+    // BEARER-protected prefixes but should behave like /me anyway. See docs/security.md.
+    @Bean
+    @ConfigurationProperties(prefix = "casbin.rbac-exempt-paths")
+    public List<String> casbinRbacExemptPaths() {
         return new ArrayList<>();
     }
 
@@ -78,7 +91,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(basicUserDetailsService(securityRules))
-                .addFilterAfter(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
+                .addFilterBefore(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
         return http.build();
     }
 
@@ -86,14 +99,21 @@ public class SecurityConfig {
     // paths, validated as Bearer JWTs against the configured issuer. Also the
     // one chain wired up for RBAC: past "authenticated", every request must
     // additionally be allowed by the jcasbin Enforcer -- see
-    // CasbinAuthorizationManager / rbac_model.conf / rbac_policy.csv and
-    // docs/security.md. Any BEARER path with no matching policy row is
-    // denied by default, so extend rbac_policy.csv before adding new paths
+    // CasbinAuthorizationManager / rbac_model.conf and docs/security.md.
+    // Policy lives entirely in the casbin_rule table (no bundled seed file),
+    // so any BEARER path with no matching row already in that table is
+    // denied by default -- add the row (via CasbinPolicyController, or
+    // directly in the DB for the very first one) before adding new paths
     // here.
     @Bean
     @Order(2)
     public SecurityFilterChain bearerAuthSecurityFilterChain(
-            HttpSecurity http, List<SecurityRuleProperties> securityRules, UserService userService, Enforcer casbinEnforcer)
+            HttpSecurity http,
+            List<SecurityRuleProperties> securityRules,
+            UserService userService,
+            Enforcer casbinEnforcer,
+            RequestMappingHandlerMapping requestMappingHandlerMapping,
+            List<String> casbinRbacExemptPaths)
             throws Exception {
         List<String> paths = pathsOf(securityRules, AuthType.BEARER);
         if (paths.isEmpty()) {
@@ -102,7 +122,7 @@ public class SecurityConfig {
         AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<RequestAuthorizationContext>allOf(
                 new AuthorizationDecision(false),
                 AuthenticatedAuthorizationManager.authenticated(),
-                new CasbinAuthorizationManager(casbinEnforcer));
+                new CasbinAuthorizationManager(casbinEnforcer, requestMappingHandlerMapping, casbinRbacExemptPaths));
         http
                 .securityMatcher(paths.toArray(String[]::new))
                 .cors(Customizer.withDefaults())
@@ -113,7 +133,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(bearerTokenResolver())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .addFilterAfter(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
+                .addFilterBefore(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
         return http.build();
     }
 
@@ -137,7 +157,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(bearerTokenResolver())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .addFilterAfter(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
+                .addFilterBefore(new UserContextEnrichmentFilter(userService), AuthorizationFilter.class);
         return http.build();
     }
 

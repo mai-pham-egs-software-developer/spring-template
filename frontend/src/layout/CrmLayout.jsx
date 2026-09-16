@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ClipboardList, FileCode, Folder, KeyRound, Lock, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Building2, FileCode, Folder, Lock, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { initialsOf, navActive, navBase } from "./crmStyles";
 
@@ -7,8 +7,7 @@ const NAV_ITEMS = [
   { to: "/profile", label: "My Profiles", icon: Users },
   { to: "/files", label: "File Management", icon: Folder },
   { to: "/users", label: "User Management", icon: ShieldCheck },
-  { to: "/audit-log", label: "Audit Log", icon: ClipboardList },
-  { to: "/roles", label: "Roles & Permissions", icon: KeyRound },
+  { to: "/organizations", label: "Organization Management", icon: Building2 },
   { to: "/casbin-policies", label: "Casbin Policies", icon: Lock },
   { to: "/casbin-model-config", label: "Casbin Model Config", icon: FileCode },
   { to: "/api-demo", label: "API Demo", icon: Sparkles },
@@ -47,7 +46,7 @@ export function CrmLayout() {
           {/* assets/egs-mark-white.svg from the design export wasn't included in the
               download -- falling back to the repo's real Eastgate mark instead. */}
           <img src="/favicon.svg" alt="Eastgate" style={{ width: 28, height: 28, flex: "none" }} />
-          <div style={{ color: "#fff", fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>Eastgate CRM</div>
+          <div style={{ color: "#fff", fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>Operator Admin</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "16px 12px", flex: 1 }}>

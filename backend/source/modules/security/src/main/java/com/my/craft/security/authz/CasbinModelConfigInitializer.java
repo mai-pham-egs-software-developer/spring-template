@@ -8,7 +8,6 @@ import org.casbin.jcasbin.main.Enforcer;
 import org.casbin.jcasbin.model.Model;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -29,12 +28,8 @@ import com.my.craft.security.repository.CasbinModelConfigJpaRepository;
  *       re-reads {@code casbin_rule} against it -- otherwise a runtime {@code PUT /config} would
  *       be lost on every restart.
  * </ul>
- *
- * <p>Ordered before {@link CasbinPolicySeeder} so policy rows get seeded against whichever model
- * ends up active.
  */
 @Component
-@Order(1)
 public class CasbinModelConfigInitializer implements ApplicationRunner {
 
     private final Enforcer enforcer;

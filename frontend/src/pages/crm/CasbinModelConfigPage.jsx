@@ -46,7 +46,7 @@ export function CasbinModelConfigPage() {
 
   return (
     <div>
-      <ListPageHeader breadcrumb="CRM · Administration" title="Casbin Model Config" />
+      <ListPageHeader breadcrumb="Operator Admin · Administration" title="Casbin Model Config" />
 
       {error && <p style={{ color: "var(--color-error)" }}>{error}</p>}
 

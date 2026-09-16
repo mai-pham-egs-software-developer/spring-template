@@ -71,13 +71,26 @@ security:
 # RBAC policy storage for modules/security's Casbin enforcer (casbin-spring-boot-starter) --
 # JDBC-backed (table casbin_rule, in this same Postgres DB) instead of a static file, so policy
 # can change at runtime via CasbinPolicyController. model still comes from the bundled
-# rbac_model.conf (keyMatch2 path matching); rbac_policy.csv is only a one-time seed applied by
-# CasbinPolicySeeder when that table is empty. See docs/security.md.
+# rbac_model.conf (keyMatch2 path matching) on first boot, then from casbin_model_config (see
+# CasbinModelConfigInitializer). Policy itself has no seed file at all -- casbin_rule starts
+# empty; the first p/g rows must be inserted directly. See docs/security.md.
 casbin:
   model: classpath:casbin/rbac_model.conf
   store-type: jdbc
   table-name: casbin_rule
   initialize-schema: create
+  # Ant-style path patterns that skip CasbinAuthorizationManager's org/role/permission check
+  # entirely (still requires plain authentication) -- for something under a BEARER-protected
+  # prefix above that should behave like /me.
+  #   - /biz/organizations/me: the current caller's own orgs (userId comes from the token, not
+  #     the path) -- inherently self-scoped, so open to any authenticated user. Prefer this over
+  #     the entry below for anything that only needs "my orgs", e.g. bizz-fe's Select Organization
+  #     screen right after login.
+  #   - /biz/users/*/organizations: the same lookup but for an arbitrary {userId} in the path --
+  #     any authenticated user, for any userId, no role/org grant needed.
+  rbac-exempt-paths:
+    - /biz/organizations/me
+    - /biz/users/*/organizations
 
 # Admin REST API connection to Keycloak (separate from the end-user OIDC/JWT config above) --
 # backs KeycloakUserService, in particular the master-account bootstrap below. Authenticates
@@ -96,7 +109,7 @@ keycloak:
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: http://localhost:5173, http://localhost:5174
 
   # MasterAccountInitializer ensures this account exists in Keycloak (created if missing,
   # password reset, realm-role assigned) on every boot, so a fresh environment always has one

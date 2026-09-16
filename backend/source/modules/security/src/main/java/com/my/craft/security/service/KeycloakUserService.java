@@ -44,10 +44,10 @@ public class KeycloakUserService implements UserService {
     public void deactivateUser() {}
 
     @Override
-    public void initMasterAccount() {
+    public String initMasterAccount() {
         if (!masterAccountProperties.isEnabled()) {
             log.info("Master account bootstrap disabled (app.master-account.enabled=false)");
-            return;
+            return null;
         }
 
         RealmResource realm = keycloakAdminClient.realm(adminProperties.getRealm());
@@ -62,6 +62,7 @@ public class KeycloakUserService implements UserService {
         resetPassword(users, userId);
         assignRealmRole(realm, users, userId);
         log.info("Master account '{}' ready in realm '{}'", username, adminProperties.getRealm());
+        return userId;
     }
 
     private String createMasterUser(UsersResource users) {

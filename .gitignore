@@ -32,6 +32,19 @@ operator-frontend/yarn-error.log*
 operator-frontend/pnpm-debug.log*
 operator-frontend/lerna-debug.log*
 
+# --- operator-frontend/ (Node / Vite) ---
+bizz-fe/node_modules/
+bizz-fe/dist/
+bizz-fe/dist-ssr/
+bizz-fe/*.local
+bizz-fe/logs
+bizz-fe/*.log
+bizz-fe/npm-debug.log*
+bizz-fe/yarn-debug.log*
+bizz-fe/yarn-error.log*
+bizz-fe/pnpm-debug.log*
+bizz-fe/lerna-debug.log*
+
 # --- IDE (any folder) ---
 .idea/
 *.iml

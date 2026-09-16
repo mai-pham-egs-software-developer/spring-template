@@ -3,15 +3,13 @@ import { AuthProvider } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { CrmLayout } from "./layout/CrmLayout";
 import { Home } from "./pages/Home";
-import { AuditDetailPage } from "./pages/crm/AuditDetailPage";
-import { AuditLogPage } from "./pages/crm/AuditLogPage";
 import { CasbinModelConfigPage } from "./pages/crm/CasbinModelConfigPage";
 import { CasbinPoliciesPage } from "./pages/crm/CasbinPoliciesPage";
 import { FileDetailPage } from "./pages/crm/FileDetailPage";
 import { FilesPage } from "./pages/crm/FilesPage";
+import { OrganizationDetailPage } from "./pages/crm/OrganizationDetailPage";
+import { OrganizationsPage } from "./pages/crm/OrganizationsPage";
 import { ProfilePage } from "./pages/crm/ProfilePage";
-import { RoleDetailPage } from "./pages/crm/RoleDetailPage";
-import { RolesPage } from "./pages/crm/RolesPage";
 import { UserDetailPage } from "./pages/crm/UserDetailPage";
 import { UsersPage } from "./pages/crm/UsersPage";
 
@@ -33,10 +31,8 @@ function App() {
             <Route path="files/:fileId" element={<FileDetailPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="users/:userId" element={<UserDetailPage />} />
-            <Route path="audit-log" element={<AuditLogPage />} />
-            <Route path="audit-log/:auditId" element={<AuditDetailPage />} />
-            <Route path="roles" element={<RolesPage />} />
-            <Route path="roles/:roleId" element={<RoleDetailPage />} />
+            <Route path="organizations" element={<OrganizationsPage />} />
+            <Route path="organizations/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="casbin-policies" element={<CasbinPoliciesPage />} />
             <Route path="casbin-model-config" element={<CasbinModelConfigPage />} />
             <Route path="api-demo" element={<Home />} />

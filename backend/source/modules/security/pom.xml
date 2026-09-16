@@ -44,6 +44,16 @@
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- CasbinAuthorizationManager resolves the current request's HandlerMethod via
+             RequestMappingHandlerMapping to read @RequiresPermission. Same reasoning as
+             jakarta.servlet-api above: type-only at compile time, the real
+             RequestMappingHandlerMapping bean comes from the consuming app's own
+             spring-boot-starter-web at runtime. -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Builds the Enforcer/Adapter beans: JDBC-backed policy storage (table casbin_rule) using
              this module's own Postgres DataSource, so RBAC policy can change at runtime without a
@@ -61,8 +71,8 @@
             <artifactId>casbin-spring-boot-starter</artifactId>
             <version>1.9.0</version>
         </dependency>
-        <!-- Backs User/AdminRole/Permission (com.my.craft.security.domain) unrelated to Casbin,
-             see SecurityJpaConfig. -->
+        <!-- Backs User/Organization/Role/Permission (com.my.craft.security.domain) unrelated to
+             Casbin, see SecurityJpaConfig. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
