@@ -1,0 +1,17 @@
+MinIO ({{ .Chart.AppVersion }}) has been deployed as "{{ include "minio.fullname" . }}" in namespace {{ .Release.Namespace }}.
+
+  API:     {{ include "minio.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.apiPort }}
+  Console: {{ include "minio.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.consolePort }}
+
+Port-forward to reach it from your machine:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "minio.fullname" . }} 9000:{{ .Values.service.apiPort }} 9001:{{ .Values.service.consolePort }}
+
+Root credentials live in Secret "{{ include "minio.secretName" . }}" (keys: root-user, root-password):
+
+  kubectl -n {{ .Release.Namespace }} get secret {{ include "minio.secretName" . }} -o jsonpath='{.data.root-user}' | base64 -d
+  kubectl -n {{ .Release.Namespace }} get secret {{ include "minio.secretName" . }} -o jsonpath='{.data.root-password}' | base64 -d
+{{- if .Values.buckets }}
+
+Buckets created on install/upgrade: {{ join ", " .Values.buckets }}
+{{- end }}

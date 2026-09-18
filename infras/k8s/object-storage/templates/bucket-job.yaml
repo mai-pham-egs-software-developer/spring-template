@@ -1,0 +1,47 @@
+{{- if .Values.buckets }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "minio.fullname" . }}-init-buckets
+  labels:
+    {{- include "minio.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "minio.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: "{{ .Values.mcImage.repository }}:{{ .Values.mcImage.tag }}"
+          imagePullPolicy: {{ .Values.mcImage.pullPolicy }}
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" . }}
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" . }}
+                  key: root-password
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              until mc alias set local http://{{ include "minio.fullname" . }}:{{ .Values.service.apiPort }} "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
+                echo "waiting for minio..."
+                sleep 3
+              done
+              {{- range .Values.buckets }}
+              mc mb --ignore-existing local/{{ . }}
+              {{- end }}
+{{- end }}

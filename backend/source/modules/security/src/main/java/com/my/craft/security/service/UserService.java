@@ -1,12 +1,28 @@
 package com.my.craft.security.service;
 
+import java.util.Optional;
+
 import com.my.craft.security.service.initial.MasterAccountInitializer;
 
 /** Port onto whichever identity provider actually owns accounts (Keycloak here, {@link
  * KeycloakUserService}; Cognito or another provider would be a sibling implementation). */
 public interface UserService {
 
-    void createUser();
+    /**
+     * Attempts to create {@code username}/{@code email} as a new account. Called ONLY by {@code
+     * com.my.craft.security.service.outbox.OutboxWorker} -- never synchronously from the web
+     * tier, since this might not succeed for a while (retries) or ever (CONFLICT/FAILED). Never
+     * throws for a failure the caller is expected to handle: every outcome, including "couldn't
+     * reach the provider" and "the provider rejected the payload," is a value -- see {@link
+     * CreateUserOutcome}.
+     */
+    CreateUserOutcome tryCreateUser(String username, String email);
+
+    /** The provider's id for the account named {@code username}, if one already exists --
+     * used by {@code com.my.craft.security.service.outbox.UserReconciliationJob} to heal a
+     * {@code PENDING} row whose account turns out to already exist upstream. */
+    Optional<String> findKeycloakIdByUsername(String username);
+
     void updateUser();
     void deactivateUser();
 

@@ -8,6 +8,7 @@ import com.my.craft.security.service.RoleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.my.craft.auditlog.service.AuditActionRecorder;
 import com.my.craft.security.dto.RoleRequest;
 import com.my.craft.security.dto.RoleResponse;
 import com.my.craft.security.domain.Organization;
@@ -17,18 +18,22 @@ import com.my.craft.security.repository.RoleJpaRepository;
 
 /**
  * {@code Role.organization} is {@code FetchType.LAZY} and {@code open-in-view} is off, so every
- * method that reads it (directly, or via {@code RoleResponse.from}) needs to stay inside a
- * transaction for the whole read+map -- {@code @Transactional} here does that.
+ * method that reads it (directly, via {@code RoleResponse.from}, or via {@code
+ * AuditActionRecorder.record}/{@code recordDeletion} snapshotting the entity) needs to stay
+ * inside a transaction for the whole read+map -- {@code @Transactional} here does that.
  */
 @Service
 public class DefaultRoleService implements RoleService {
 
     private final OrganizationJpaRepository organizationRepository;
     private final RoleJpaRepository roleRepository;
+    private final AuditActionRecorder auditActionRecorder;
 
-    public DefaultRoleService(OrganizationJpaRepository organizationRepository, RoleJpaRepository roleRepository) {
+    public DefaultRoleService(
+            OrganizationJpaRepository organizationRepository, RoleJpaRepository roleRepository, AuditActionRecorder auditActionRecorder) {
         this.organizationRepository = organizationRepository;
         this.roleRepository = roleRepository;
+        this.auditActionRecorder = auditActionRecorder;
     }
 
     @Override
@@ -48,7 +53,9 @@ public class DefaultRoleService implements RoleService {
     @Transactional
     public RoleResponse create(Long organizationId, RoleRequest request) {
         Organization organization = requireOrganization(organizationId);
-        return RoleResponse.from(roleRepository.save(new Role(request.name(), organization)));
+        Role saved = roleRepository.save(new Role(request.name(), organization));
+        auditActionRecorder.record("ROLE_CREATED", saved);
+        return RoleResponse.from(saved);
     }
 
     @Override
@@ -56,14 +63,17 @@ public class DefaultRoleService implements RoleService {
     public RoleResponse update(Long organizationId, Long roleId, RoleRequest request) {
         Role role = requireRole(organizationId, roleId);
         role.setName(request.name());
-        return RoleResponse.from(roleRepository.save(role));
+        Role saved = roleRepository.save(role);
+        auditActionRecorder.record("ROLE_UPDATED", saved);
+        return RoleResponse.from(saved);
     }
 
     @Override
     @Transactional
     public void delete(Long organizationId, Long roleId) {
-        requireRole(organizationId, roleId);
+        Role role = requireRole(organizationId, roleId);
         roleRepository.deleteById(roleId);
+        auditActionRecorder.recordDeletion("ROLE_DELETED", role);
     }
 
     private Organization requireOrganization(Long organizationId) {

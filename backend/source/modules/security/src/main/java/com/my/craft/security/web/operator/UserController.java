@@ -15,20 +15,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.my.craft.security.annotation.RequiresPermission;
 import com.my.craft.security.dto.CreateUserRequest;
+import com.my.craft.security.dto.OrganizationResponse;
 import com.my.craft.security.dto.UpdateUserRequest;
 import com.my.craft.security.dto.UserResponse;
+import com.my.craft.security.service.OrganizationMembershipService;
 import com.my.craft.security.service.UserAdminService;
 
-/** Plain CRUD over {@code User} -- delegates to {@link UserAdminService}. */
+/** Plain CRUD over {@code User} -- delegates to {@link UserAdminService}. {@code create} returns
+ * {@code 202 Accepted}, not {@code 201}: the row it hands back is {@code PENDING}, synced to the
+ * identity provider asynchronously by {@code com.my.craft.security.service.outbox.OutboxWorker}
+ * -- see {@code backend/docs/user-outbox.md}. */
 @RestController
 @RequestMapping(Constants.BASE_PATH + "/users")
 @RequiresPermission(resource = "user", action = "READ")
 public class UserController {
 
     private final UserAdminService userAdminService;
+    private final OrganizationMembershipService membershipService;
 
-    public UserController(UserAdminService userAdminService) {
+    public UserController(UserAdminService userAdminService, OrganizationMembershipService membershipService) {
         this.userAdminService = userAdminService;
+        this.membershipService = membershipService;
     }
 
     @GetMapping
@@ -45,7 +52,7 @@ public class UserController {
     @RequiresPermission(resource = "user", action = "WRITE")
     @PostMapping
     public ResponseEntity<UserResponse> create(@RequestBody CreateUserRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userAdminService.create(request));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(userAdminService.create(request));
     }
 
     @RequiresPermission(resource = "user", action = "WRITE", idParam = "id")
@@ -59,5 +66,14 @@ public class UserController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         userAdminService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // No @RequiresPermission here on purpose -- this path is listed in casbin.rbac-exempt-paths,
+    // so CasbinAuthorizationManager grants it outright (still requires plain Bearer auth) before
+    // ever resolving an annotation. Any callers still need to be authenticated; there's just no
+    // per-org role/permission gate on top of that. See docs/security.md.
+    @GetMapping("/{userId}/organizations")
+    public List<OrganizationResponse> organizationsOf(@PathVariable String userId) {
+        return membershipService.findOrganizationsByUser(userId);
     }
 }

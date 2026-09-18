@@ -88,7 +88,11 @@ public class MasterAccountInitializer implements ApplicationRunner {
                 .findById(Organization.MASTER_ID)
                 .orElseThrow(() -> new IllegalStateException("Master organization missing right after insert"));
 
-        User user = userRepository.findById(userId).orElseGet(() -> userRepository.save(new User(userId, masterAccountProperties.getUsername())));
+        User user = userRepository.findByKeycloakId(userId).orElseGet(() -> {
+            User created = new User(masterAccountProperties.getUsername(), masterAccountProperties.getEmail(), masterAccountProperties.getUsername());
+            created.activate(userId);
+            return userRepository.save(created);
+        });
 
         Role superAdminRole = roleRepository
                 .findByOrganizationIdAndName(Organization.MASTER_ID, SUPER_ADMIN_ROLE_NAME)

@@ -63,8 +63,6 @@ security:
     password: admin
   - path: /operators/**
     auth-type: BEARER
-  - path: /biz/**
-    auth-type: BEARER
   - path: /api/**
     auth-type: BEARER
 
@@ -82,15 +80,10 @@ casbin:
   # Ant-style path patterns that skip CasbinAuthorizationManager's org/role/permission check
   # entirely (still requires plain authentication) -- for something under a BEARER-protected
   # prefix above that should behave like /me.
-  #   - /biz/organizations/me: the current caller's own orgs (userId comes from the token, not
-  #     the path) -- inherently self-scoped, so open to any authenticated user. Prefer this over
-  #     the entry below for anything that only needs "my orgs", e.g. bizz-fe's Select Organization
-  #     screen right after login.
-  #   - /biz/users/*/organizations: the same lookup but for an arbitrary {userId} in the path --
-  #     any authenticated user, for any userId, no role/org grant needed.
+  #   - /operators/users/*/organizations: every org a given {userId} belongs to -- any
+  #     authenticated user, for any userId, no role/org grant needed (UserController#organizationsOf).
   rbac-exempt-paths:
-    - /biz/organizations/me
-    - /biz/users/*/organizations
+    - /operators/users/*/organizations
 
 # Admin REST API connection to Keycloak (separate from the end-user OIDC/JWT config above) --
 # backs KeycloakUserService, in particular the master-account bootstrap below. Authenticates
@@ -121,6 +114,14 @@ app:
     email: master@example.com
     password: ChangeMe123!
     realm-role: admin
+
+  # Outbox pattern for the User/Keycloak dual write -- OutboxWorker/UserReconciliationJob
+  # (com.my.craft.security.service.outbox). See backend/docs/user-outbox.md.
+  outbox:
+    poll-interval: PT2S
+    max-attempts: 6
+    stale-pending-threshold: PT15M
+    reconciliation-cron: "0 */15 * * * *"
 
 file-storage:
   bucket: my-bucket

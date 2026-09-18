@@ -19,6 +19,12 @@ public interface UserAdminService {
     /** @throws UserNotFoundException if {@code id} doesn't exist. */
     UserResponse findById(String id);
 
+    /** Writes the local row (status {@code PENDING}) and an outbox event in one transaction, then
+     * returns immediately -- it never calls the identity provider itself. See {@code
+     * com.my.craft.security.service.outbox.OutboxWorker} and {@code backend/docs/user-outbox.md}.
+     *
+     * @throws UserAlreadyExistsException if {@code request.username()}/{@code request.email()}
+     *     already exists. */
     UserResponse create(CreateUserRequest request);
 
     /** @throws UserNotFoundException if {@code id} doesn't exist. */

@@ -87,14 +87,15 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- Admin REST API client for the target identity provider (Keycloak here), backs
-             KeycloakUserService / the master-account bootstrap. Separate from
-             spring-boot-starter-oauth2-client/-resource-server above, which only ever authenticate
-             end users against Keycloak, never manage it. -->
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
             <version>26.0.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.my.craft</groupId>
+            <artifactId>audit-log</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

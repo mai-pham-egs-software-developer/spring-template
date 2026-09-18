@@ -7,6 +7,9 @@ import org.springframework.data.repository.query.Param;
 
 import com.my.craft.security.domain.Organization;
 
+/** No blanket {@code @JaversSpringDataAuditable} here -- audit entries for {@link Organization}
+ * are written explicitly, only for marked actions, via {@code AuditActionRecorder} in {@code
+ * DefaultOrganizationService} -- see backend/docs/audit-log.md. */
 public interface OrganizationJpaRepository extends JpaRepository<Organization, Long> {
 
     /**

@@ -206,18 +206,31 @@ AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<
   (`com.my.craft.security.domain` -- which `CasbinAuthorizationManager` never reads), it also
   inserts the matching `casbin_rule` rows directly through the `Enforcer` (idempotently, via
   `hasGroupingPolicy`/`hasPolicy` checks first): `g, <masterUserId>, SUPER_ADMIN, 0` and `p,
-  SUPER_ADMIN, 0, *, *, *`. So on every boot, the master account can reach any RBAC-protected path
-  scoped to the master org (`Organization.MASTER_ID`) -- which, per the `@RequiresPermission`
-  fallback rule above, is every unannotated path too. Anything else (a second admin, a
-  non-platform org's own rows) still needs a manual `INSERT` against `casbin_rule` (`psql`/any
-  client), then `POST /operators/casbin/reload` (or a restart) so the running `Enforcer` picks it
-  up. From then on, manage policy through `CasbinPolicyController` (below).
+  SUPER_ADMIN, 0, *, *, *`. Taken on its own, that `p` row only covers the master org
+  (`Organization.MASTER_ID`) -- which, per the `@RequiresPermission` fallback rule above, is every
+  unannotated path too, but *not* another org's roles/members (their requests carry that org's own
+  `orgId`, not `"0"`). Anything else (a second admin, a non-platform org's own rows) still needs a
+  manual `INSERT` against `casbin_rule` (`psql`/any client), then `POST /operators/casbin/reload`
+  (or a restart) so the running `Enforcer` picks it up. From then on, manage policy through
+  `CasbinPolicyController` (below).
+- **Master-org membership bypasses the whole `/operators` surface.** `CasbinAuthorizationManager`
+  grants outright, without ever building the request tuple or calling `enforcer.enforce`, whenever
+  the caller holds any role (any `g` row) in `Organization.MASTER_ID` and the request path starts
+  with `/operators` (`isMasterOrgMember`, alongside `exemptPathPatterns` in `check()`). This is
+  what actually lets the master account (or anyone else granted a role in the master org) manage
+  *every* organization's roles and members through `OrganizationController` -- without it, the
+  master-org-scoped `p` row above would only ever match requests whose `orgId` is `"0"`. In short:
+  a role in the master org means "platform operator," full stop, regardless of ordinary per-org `p`
+  rows.
 - **`p` rows** are the actual grants (`role, orgId, objectType, objectId, action`); **`g` rows**
   assign a role to a user within one org (`userId, role, orgId`). `CasbinAuthorizationManager`
   calls `enforcer.enforce(userId, orgId, objectType, objectId, action)` with `userId` =
-  `CustomAuthenticationToken`'s `UserContext.userId()` (the Keycloak subject claim, the same id
-  `User.id` uses -- *not* the username). `orgId`/`objectType`/`objectId`/`action` come from one
-  of two places:
+  `CustomAuthenticationToken`'s `UserContext.userId()` -- the Keycloak subject claim straight off
+  the JWT, *not* the username, and (since `docs/user-outbox.md`) *not* `User.id` either: `User.id`
+  is now an app-generated local key, decoupled from Keycloak's id, because the row has to exist
+  before the identity provider has ever been called. RBAC is unaffected either way -- it was
+  always keyed by the JWT claim, never by anything in the `users` table. `orgId`/`objectType`/
+  `objectId`/`action` come from one of two places:
   - **`@RequiresPermission`** (`com.my.craft.security.annotation`), on the resolved controller
     method or (as a fallback default) its class -- the two are never merged field-by-field, so a
     method that overrides anything must repeat every attribute it needs:
@@ -233,10 +246,10 @@ AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<
       org id, by sending `X-Org-Id: <id>`; a client that sends nothing keeps the old
       master-org-only behavior.
 
-    This is what `UserController`/`OrganizationController`/`RoleController` use, e.g. `orgId =
-    "1"`, `objectType = "role"`, `objectId = "7"`, `action = "WRITE"` for `PUT
-    /operators/organizations/1/roles/7` -- matching `Permission.resource`/`Permission.actionType`'s
-    own shape, not the URL.
+    This is what `UserController`/`OrganizationController` (its role and member sub-resource
+    endpoints included) use, e.g. `orgId = "1"`, `objectType = "role"`, `objectId = "7"`, `action =
+    "WRITE"` for `PUT /operators/organizations/1/roles/7` -- matching
+    `Permission.resource`/`Permission.actionType`'s own shape, not the URL.
   - Otherwise (no `@RequiresPermission` anywhere on that handler, e.g. `CasbinPolicyController`,
     `MeController`): `objectType = request.getRequestURI()`, `objectId = ""`, `action =
     request.getMethod()`, `orgId` resolved the same "master-less" way as above (`X-Org-Id`, else
@@ -259,20 +272,15 @@ AuthorizationManager<RequestAuthorizationContext> rbac = AuthorizationManagers.<
 - **`casbin.rbac-exempt-paths`** (Ant-style patterns, e.g. `/operators/health/**`) skip
   `CasbinAuthorizationManager` outright — `check()` returns granted before even resolving the
   handler or building the request tuple, for a path that needs to sit under a `BEARER`-protected
-  prefix (`/operators/**`, `/biz/**`, `/api/**`) but should behave like `/me`: no org/role/
+  prefix (`/operators/**`, `/api/**`) but should behave like `/me`: no org/role/
   permission check, just plain authentication (still enforced separately by
   `AuthenticatedAuthorizationManager.authenticated()` alongside this manager in `SecurityConfig`'s
   `allOf(...)`). `/me` itself doesn't need to be listed here — it isn't matched by any `BEARER`
   path in the `security:` list, so it never reaches this chain at all; this is only for something
   that *does* sit under one of those prefixes. Empty by default. Current entries:
-  - `/biz/organizations/me` (`OrganizationController.listMine`) — the caller's own orgs, `userId`
-    read from the authenticated token rather than a path variable, so it's inherently self-scoped
-    and safe to open to everyone.
-  - `/biz/users/*/organizations` (`OrganizationUserController.listOrganizationsOfUser`) — the same
-    lookup for an arbitrary `{userId}` path segment; any authenticated caller can query *any*
-    user's org list, not just their own. Prefer the `/organizations/me` endpoint above for
-    "what orgs am I in" (e.g. bizz-fe's Select Organization screen); this one stays only for
-    callers that actually need another user's orgs.
+  - `/operators/users/*/organizations` (`UserController.organizationsOf`) — every org a given
+    `{userId}` belongs to; any authenticated caller can query *any* user's org list, not just
+    their own (there's no "my orgs" self-scoped variant in this template).
 - Only `bearerAuthSecurityFilterChain` is wired to `rbac`; `basicAuthSecurityFilterChain` and
   `defaultSecurityFilterChain` still just check `authenticated()`. Swap their
   `.anyRequest().authenticated()` for `.anyRequest().access(rbac)` the same way if those paths

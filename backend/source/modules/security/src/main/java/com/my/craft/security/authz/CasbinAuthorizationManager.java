@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import com.my.craft.security.annotation.RequiresPermission;
 import com.my.craft.security.domain.Organization;
 import com.my.craft.security.security.CustomAuthenticationToken;
+import com.my.craft.security.web.operator.Constants;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -27,8 +28,10 @@ import jakarta.servlet.http.HttpServletRequest;
  *
  * <ul>
  *   <li>{@code userId} -- the enriched {@link com.my.craft.security.security.UserContext#userId()},
- *       the Keycloak subject claim, the same id {@code User.id} uses (not the username: {@code g}
- *       rows assign roles to this id, matching {@code UserOrganizationRole.user}).
+ *       the Keycloak subject claim straight off the JWT (not the username, and -- since {@code
+ *       backend/docs/user-outbox.md} -- not {@code User.id} either: that's now an app-generated
+ *       local key, decoupled from Keycloak's, so {@code g} rows are keyed by this JWT claim
+ *       directly rather than by anything in the {@code users} table).
  *   <li>{@code objectType}/{@code action} -- {@link RequiresPermission#resource()}/{@link
  *       RequiresPermission#action()} off the resolved handler method, or (if the method itself
  *       doesn't carry one) its declaring class.
@@ -58,6 +61,16 @@ import jakarta.servlet.http.HttpServletRequest;
  * /me} (no org/role/permission check at all, just plain authentication -- still enforced by
  * {@code AuthenticatedAuthorizationManager.authenticated()} alongside this manager in {@code
  * SecurityConfig}'s {@code allOf(...)}).
+ *
+ * <p>{@link #isMasterOrgMember} is a second, narrower bypass: any authenticated user holding a
+ * role in {@link Organization#MASTER_ID} passes outright for every path under {@link
+ * Constants#BASE_PATH} ({@code /operators}), regardless of which org a given request's {@code
+ * orgId} names. Without it, a master-org admin could only manage the master org itself -- the
+ * bootstrap {@code SUPER_ADMIN} grant {@code MasterAccountInitializer} seeds is a wildcard {@code
+ * p} row scoped to {@code orgId = "0"}, and the domain-RBAC matcher requires the role assignment
+ * (the {@code g} row) to exist in the *requested* org's domain, not the master org's. This bypass
+ * makes master-org membership mean "platform operator", the way the rest of {@code /operators}
+ * (its own CRUD and every org's role/member sub-resources alike) is meant to work.
  *
  * <p>Requires {@link com.my.craft.security.security.UserContextEnrichmentFilter} to have already
  * run, i.e. must only be used on a chain that registers it with {@code addFilterBefore} (not
@@ -93,6 +106,11 @@ public class CasbinAuthorizationManager implements AuthorizationManager<RequestA
             return new AuthorizationDecision(false);
         }
         String userId = token.getUserContext().userId();
+
+        if (request.getRequestURI().startsWith(Constants.BASE_PATH) && isMasterOrgMember(userId)) {
+            return new AuthorizationDecision(true);
+        }
+
         RequiresPermission permission = resolveAnnotation(request);
 
         String orgId = resolveOrgId(permission, request);
@@ -124,6 +142,22 @@ public class CasbinAuthorizationManager implements AuthorizationManager<RequestA
     private boolean isExempt(HttpServletRequest request) {
         String path = request.getRequestURI();
         return exemptPathPatterns.stream().anyMatch(pattern -> PATH_MATCHER.match(pattern, path));
+    }
+
+    /**
+     * Whether {@code userId} holds any role (any {@code g} row) within {@link
+     * Organization#MASTER_ID} -- e.g. the {@code SUPER_ADMIN} role {@link
+     * com.my.craft.security.service.initial.MasterAccountInitializer} grants the bootstrap master
+     * account. That grant's own {@code p} row is itself scoped to {@code orgId = "0"} (not
+     * {@code "*"}), so without this check a master-org member could administer the master org but
+     * not any other one's roles/members through {@code OrganizationController}, since the
+     * matcher's {@code g(r.userId, p.role, r.orgId)} only looks for a role assignment in the
+     * *requested* org's domain. This bypass makes master-org membership synonymous with
+     * "platform operator": full access to every {@link Constants#BASE_PATH} path regardless of
+     * which org it targets.
+     */
+    private boolean isMasterOrgMember(String userId) {
+        return !enforcer.getRolesForUserInDomain(userId, String.valueOf(Organization.MASTER_ID)).isEmpty();
     }
 
     /** Method-level {@link RequiresPermission} wins over one on the declaring class; {@code

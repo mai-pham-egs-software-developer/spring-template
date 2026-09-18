@@ -13,5 +13,6 @@
 		<module>common</module>
 		<module>security</module>
 		<module>file-storage</module>
+		<module>audit-log</module>
 	</modules>
 </project>

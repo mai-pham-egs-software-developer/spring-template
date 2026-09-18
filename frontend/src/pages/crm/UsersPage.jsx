@@ -4,6 +4,7 @@ import { ChevronRight, Plus } from "lucide-react";
 import { listUsers } from "../../api/users";
 import { ListPageHeader } from "../../layout/CrmPageHeader";
 import { initialsOf, primaryButton, row, tableCard, td, th } from "../../layout/crmStyles";
+import { UserStatusPill } from "./UserStatusPill";
 
 export function UsersPage() {
   const navigate = useNavigate();
@@ -49,21 +50,22 @@ export function UsersPage() {
           <thead>
             <tr style={{ background: "var(--color-mist)" }}>
               <th style={th}>Name</th>
-              <th style={th}>ID (Keycloak subject)</th>
+              <th style={th}>Username</th>
+              <th style={th}>Status</th>
               <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td style={td} colSpan={3}>
+                <td style={td} colSpan={4}>
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && users.length === 0 && (
               <tr>
-                <td style={td} colSpan={3}>
+                <td style={td} colSpan={4}>
                   No users yet.
                 </td>
               </tr>
@@ -93,7 +95,10 @@ export function UsersPage() {
                       <span style={{ fontWeight: 500, color: "var(--color-fg-1)" }}>{u.name}</span>
                     </div>
                   </td>
-                  <td style={{ ...td, color: "var(--color-fg-2)", fontFamily: "var(--font-mono, monospace)" }}>{u.id}</td>
+                  <td style={{ ...td, color: "var(--color-fg-2)" }}>{u.username}</td>
+                  <td style={td}>
+                    <UserStatusPill status={u.status} />
+                  </td>
                   <td style={{ ...td, textAlign: "right" }}>
                     <ChevronRight size={18} strokeWidth={1.5} style={{ color: "var(--color-fg-3)" }} />
                   </td>

@@ -1,0 +1,47 @@
+{{- if .Values.ingress.enabled }}
+{{- $apiHost := .Values.ingress.api.host | default (printf "minio-api.%s" .Values.ingress.baseDomain) }}
+{{- $consoleHost := .Values.ingress.console.host | default (printf "minio-console.%s" .Values.ingress.baseDomain) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "minio.fullname" . }}
+  labels:
+    {{- include "minio.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if $apiHost }}
+    - host: {{ $apiHost }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.api.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "minio.fullname" . }}
+                port:
+                  name: api
+    {{- end }}
+    {{- if $consoleHost }}
+    - host: {{ $consoleHost }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.console.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "minio.fullname" . }}
+                port:
+                  name: console
+    {{- end }}
+{{- end }}

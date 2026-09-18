@@ -3,6 +3,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { CrmLayout } from "./layout/CrmLayout";
 import { Home } from "./pages/Home";
+import { AuditLogPage } from "./pages/crm/AuditLogPage";
 import { CasbinModelConfigPage } from "./pages/crm/CasbinModelConfigPage";
 import { CasbinPoliciesPage } from "./pages/crm/CasbinPoliciesPage";
 import { FileDetailPage } from "./pages/crm/FileDetailPage";
@@ -35,6 +36,7 @@ function App() {
             <Route path="organizations/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="casbin-policies" element={<CasbinPoliciesPage />} />
             <Route path="casbin-model-config" element={<CasbinModelConfigPage />} />
+            <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="api-demo" element={<Home />} />
           </Route>
         </Routes>

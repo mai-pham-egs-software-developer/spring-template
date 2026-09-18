@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Building2, FileCode, Folder, Lock, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Building2, ClipboardList, FileCode, Folder, Lock, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { initialsOf, navActive, navBase } from "./crmStyles";
 
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/organizations", label: "Organization Management", icon: Building2 },
   { to: "/casbin-policies", label: "Casbin Policies", icon: Lock },
   { to: "/casbin-model-config", label: "Casbin Model Config", icon: FileCode },
+  { to: "/audit-log", label: "Audit Log", icon: ClipboardList },
   { to: "/api-demo", label: "API Demo", icon: Sparkles },
 ];
 

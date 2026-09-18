@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 // scanBasePackages pulls in shared config from imported modules/* libraries
 // (e.g. com.my.craft.security, com.my.craft.filestorage), which live outside this app's own base
 // package.
-@SpringBootApplication(scanBasePackages = {"com.my.craft.main", "com.my.craft.security", "com.my.craft.filestorage"})
+@SpringBootApplication(
+        scanBasePackages = {"com.my.craft.main", "com.my.craft.security", "com.my.craft.filestorage", "com.my.craft.auditlog"})
 public class MainApplication {
 
     public static void main(String[] args) {

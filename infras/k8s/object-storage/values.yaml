@@ -1,0 +1,74 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: quay.io/minio/minio
+  tag: RELEASE.2025-09-07T16-13-09Z
+  pullPolicy: IfNotPresent
+
+mcImage:
+  repository: quay.io/minio/mc
+  tag: RELEASE.2025-08-13T08-35-41Z
+  pullPolicy: IfNotPresent
+
+# Root credentials. Defaults match infras/local/compose.yml and
+# applications/main's application.yml (file-storage.s3.access-key/secret-key)
+# so the chart is a drop-in for local/dev use.
+# CHANGE-ME before deploying anywhere shared/production — either override
+# these directly or set auth.existingSecret to a Secret you manage yourself
+# (must have keys: root-user, root-password).
+auth:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+  existingSecret: ""
+
+# type: LoadBalancer relies on k3s's built-in ServiceLB (Klipper) -- on a
+# single-node cluster this just binds the node's own IP to apiPort/consolePort,
+# so the service is reachable at <NODE_IP>:9000 / <NODE_IP>:9001 with no
+# extra load balancer to provision.
+service:
+  type: LoadBalancer
+  apiPort: 9000
+  consolePort: 9001
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Domain-based access via k3s's built-in Traefik ingress controller (also on
+# by default, on ports 80/443 of every node). These hostnames aren't publicly
+# resolvable -- point them at the node IP yourself: a hosts-file entry on
+# each client machine, or a record on whatever DNS server your LAN actually
+# uses. (A wildcard-DNS trick like *.<ip>.nip.io would avoid that per-client
+# step, but most routers/DNS servers block resolving hostnames to private
+# IPs as anti-DNS-rebinding protection -- confirmed blocked on this network.)
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  # api.host/console.host default to "minio-api.<baseDomain>" / "minio-console.<baseDomain>" --
+  # set baseDomain once, or override either host directly for something unrelated to it.
+  baseDomain: onprem.local
+  api:
+    host: ""
+    path: /
+  console:
+    host: ""
+    path: /
+  tls: []
+
+# Buckets to create on install/upgrade (a post-install/post-upgrade Job runs
+# `mc mb --ignore-existing` for each). Mirrors infras/local/compose.yml's
+# minio-init service — file-storage.bucket in application.yml expects
+# `my-bucket` to exist.
+buckets:
+  - my-bucket
