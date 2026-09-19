@@ -12,5 +12,6 @@
 	<modules>
 		<module>applications</module>
 		<module>modules</module>
+		
 	</modules>
 </project>
