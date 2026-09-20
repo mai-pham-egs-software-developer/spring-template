@@ -33,11 +33,50 @@ db:
   # same key names (username, password) precisely so this works.
   existingSecret: ""
 
+# Realm bootstrap: Keycloak imports this on every startup (--import-realm, appended to `command`
+# below when enabled), so the "bootstrap" realm the be/operator-fe/bizz-fe charts expect exists
+# with no manual step. Keycloak's own import skips a realm that already exists, so this only ever
+# does something on a fresh (empty) database -- safe to leave on across restarts.
+realm:
+  import:
+    enabled: true
+    name: bootstrap
+    # Each client's redirect URI / web origin is derived as "<scheme>://<host>", where host
+    # defaults to "<subdomain>.<baseDomain>" -- same baseDomain/host-override convention as
+    # ingress.baseDomain in ../object-storage/values.yaml. Set baseDomain once for a whole
+    # environment, or override a client's own `host` directly (e.g. back to "localhost:8081" for
+    # local dev, or a one-off real domain) for something unrelated to baseDomain.
+    baseDomain: onprem.local
+    scheme: http
+    # Confidential client for the backend's server-side OAuth2 login (authorization_code).
+    # clientId/secret must match
+    # backend/source/applications/main/src/main/resources/application.yml
+    # (spring.security.oauth2.client.registration.oidc) / the be chart's `keycloak` values.
+    # CHANGE-ME (secret) before any shared/production use. host defaults to "api.<baseDomain>",
+    # matching the be chart's own default ingress host (../be/values.yaml).
+    backendClient:
+      clientId: be-application
+      secret: nB0B1jTGKNiUEWraPw0LFgCdyGJGfRgZcv0S31Ys5s3htFGjFaNbsCEW52gWqeKOCFd6LSrfWiO3fw2CqoiiGK
+      host: ""
+      redirectPath: /login/oauth2/code/oidc
+    # Public SPA clients (standard flow + PKCE, no secret) -- one per frontend, matching each
+    # app's VITE_KEYCLOAK_CLIENT_ID (frontend/.env, bizz-fe/.env). fe-application's host defaults
+    # to "operator.<baseDomain>", matching ../operator-fe/values.yaml's default ingress host.
+    # bizz-fe has no k8s chart yet, so "bizz.<baseDomain>" is a placeholder -- override `host` once
+    # one exists (or sooner, if its real domain is already known).
+    spaClients:
+      - clientId: fe-application
+        subdomain: operator
+        host: ""
+      - clientId: bizz-fe-application
+        subdomain: bizz
+        host: ""
+
 service:
   port: 8080
 
 ingress:
-  enabled: false
+  enabled: true
   className: ""
   host: iam.onprem.local
   path: /

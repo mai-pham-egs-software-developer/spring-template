@@ -43,7 +43,24 @@ kubectl -n spring-template port-forward svc/iam-keycloak 8080:8080
 # then: http://localhost:8080 (admin console), admin/admin by default
 ```
 
-## What this chart does NOT do
+## Realm bootstrap
 
-Provision the `bootstrap` realm the backend (`be` chart) expects, or any clients/users in it —
-that's a one-time manual step (or your own realm-import automation), same as local dev today.
+On startup Keycloak imports the `bootstrap` realm the `be`/`operator-fe`/`bizz-fe` charts expect
+(`--import-realm`, appended to `command` automatically when `realm.import.enabled` is `true`, the
+default), with three clients: the confidential `be-application` (backend server-side OAuth2 login)
+and the public `fe-application` / `bizz-fe-application` (SPA login via PKCE). Client IDs and the
+backend client secret must match
+`backend/source/applications/main/src/main/resources/application.yml` and the two SPAs' `.env`
+files.
+
+Each client's redirect URI / web origin is `<scheme>://<host>`, where `host` defaults to
+`<subdomain>.<baseDomain>` — set `realm.import.baseDomain` once for a whole environment (defaults
+to `onprem.local`, matching `be`'s and `operator-fe`'s own default ingress hosts), or override a
+client's own `host` directly (e.g. `localhost:8081` for local dev, or a one-off real domain) for
+something unrelated to `baseDomain`. `bizz-fe` has no k8s chart yet, so its `bizz.<baseDomain>`
+default is a placeholder — set its `host` once a real one exists. See `realm.import` in
+[values.yaml](values.yaml) for the full set of knobs.
+
+Keycloak skips importing a realm that already exists, so this only does something on a fresh
+(empty) database; set `realm.import.enabled: false` to opt out and provision the realm some other
+way instead.

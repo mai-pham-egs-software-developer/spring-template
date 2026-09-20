@@ -20,6 +20,8 @@ db:
 iam:
   enabled: true
   fullnameOverride: iam
+  ingress:
+    enabled: true
   admin:
     username: admin
     password: admin

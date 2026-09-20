@@ -32,9 +32,9 @@ db:
   existingSecret: ""
 
 # Where to find the iam chart's Keycloak. Defaults assume the iam chart was
-# installed as release "iam" in this same namespace. NOTE: the "bootstrap"
-# realm below must already exist in Keycloak (see ../iam/README.md) -- this
-# chart does not create it.
+# installed as release "iam" in this same namespace. The "bootstrap" realm
+# below is imported by the iam chart itself on startup (see ../iam/README.md),
+# not created by this chart.
 keycloak:
   baseUrl: http://iam-keycloak:8080
   realm: bootstrap

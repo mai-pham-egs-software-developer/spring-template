@@ -8,8 +8,9 @@ spring-template's backend API (Spring Boot, image built by
 ## Prerequisites
 
 1. `db` chart installed (release name `db` by default) — provides the `craft` database.
-2. `iam` chart installed (release name `iam` by default) — **and the `bootstrap` realm already
-   created in it** (this chart does not provision realms; see `../iam/README.md`).
+2. `iam` chart installed (release name `iam` by default) — it imports the `bootstrap` realm this
+   chart expects on its own startup (see `../iam/README.md`); give it a moment to finish before
+   this chart's pod does its first OIDC-discovery call.
 3. Optionally, `object-storage` chart installed (release name `minio` by default) for file uploads.
 4. The backend image actually pushed and pullable — GHCR packages are private by default, so unless
    made public you'll need an `imagePullSecret` (see `values.yaml`).
@@ -42,4 +43,5 @@ default — override with additional env vars using the same Spring relaxed-bind
 
 If the pod is `CrashLoopBackOff` (not just slow to start — the `startupProbe` already gives it ~2.5
 minutes), check `kubectl logs`: a blocking OIDC-discovery failure at startup almost always means
-either Keycloak isn't reachable yet, or the `bootstrap` realm doesn't exist there yet.
+either Keycloak isn't reachable yet, or its `--import-realm` startup step (see `../iam/README.md`)
+hasn't finished yet.
