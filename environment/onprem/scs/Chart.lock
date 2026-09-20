@@ -4,7 +4,7 @@ dependencies:
   version: 0.1.0
 - name: keycloak
   repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
-  version: 0.1.0
+  version: 0.1.1
 - name: minio
   repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
   version: 0.1.0
@@ -14,5 +14,5 @@ dependencies:
 - name: frontend
   repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
   version: 0.1.0
-digest: sha256:c1c243af300fa75e0969982c133829206fc0bb48a23782dfa6ce785c987e953b
-generated: "2026-09-20T13:39:09.3851996+07:00"
+digest: sha256:7e58da98da3164c3c30539e74a13466de28c8a89551883a83cd4c2f4a038969c
+generated: "2026-09-21T03:17:29.3302939+07:00"
