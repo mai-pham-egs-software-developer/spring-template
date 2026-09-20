@@ -14,5 +14,6 @@ WORKDIR /workspace
 # Copy only the packaged JAR from the build stage into the runtime working directory
 COPY --from=build /workspace/applications/main/target/*.jar /workspace/app.jar
 
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/workspace/app.jar"]
