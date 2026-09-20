@@ -1,0 +1,50 @@
+name: Helm Charts CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "infras/k8s/**" ]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+
+  package-and-push:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set OCI base ref (lowercase, required by registries)
+      run: echo "OCI_BASE=$(echo '${{ env.REGISTRY }}/${{ github.repository }}/charts' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+    - uses: azure/setup-helm@v4
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+    - name: Lint, package and push each chart
+      run: |
+        set -euo pipefail
+
+        # Every subdirectory under infras/k8s that has a Chart.yaml is one module --
+        # this doesn't need updating as new charts (be/, db/, iam/, ...) are added.
+        while IFS= read -r chart_yaml; do
+          chart_dir="$(dirname "$chart_yaml")"
+          echo "::group::${chart_dir}"
+
+          helm lint "$chart_dir"
+
+          out="$(mktemp -d)"
+          helm package "$chart_dir" --destination "$out"
+          helm push "$out"/*.tgz "oci://${OCI_BASE}"
+          rm -rf "$out"
+
+          echo "::endgroup::"
+        done < <(find infras/k8s -mindepth 2 -maxdepth 2 -name Chart.yaml)

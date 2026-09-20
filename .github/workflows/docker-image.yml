@@ -3,17 +3,36 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
-    paths: [ "backend/**" ]
+    paths: [ "backend/**", "frontend/**" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "backend/**" ]
+    paths: [ "backend/**", "frontend/**" ]
 
 env:
   REGISTRY: ghcr.io
 
 jobs:
 
-  build:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+          frontend:
+            - 'frontend/**'
+
+  backend:
+
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
 
     runs-on: [self-hosted, mini-pc-homelab]
 
@@ -55,6 +74,61 @@ jobs:
         podman build --file backend/main.Containerfile "${tag_args[@]}" backend
 
     - name: Push the Backend image (podman)
+      if: github.event_name != 'pull_request'
+      run: |
+        set -euo pipefail
+        while IFS= read -r tag; do
+          [ -n "$tag" ] && podman push "$tag"
+        done <<< "${{ steps.meta.outputs.tags }}"
+
+  frontend:
+
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+
+    runs-on: [self-hosted, mini-pc-homelab]
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set image name (lowercase, required by registries)
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}-frontend' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+    - name: Log in to GitHub Container Registry (podman)
+      if: github.event_name != 'pull_request'
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+    - name: Extract tags/labels
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=sha,prefix=,format=short
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    # Vite bakes VITE_* into the bundle at build time (see frontend/Containerfile) --
+    # these match frontend/.env's local-dev defaults. CHANGE-ME (or override via
+    # repository variables) before pointing this image at anything but local dev.
+    - name: Build the Frontend image (podman)
+      run: |
+        set -euo pipefail
+        tag_args=()
+        while IFS= read -r tag; do
+          [ -n "$tag" ] && tag_args+=(--tag "$tag")
+        done <<< "${{ steps.meta.outputs.tags }}"
+        podman build --file frontend/Containerfile \
+          --build-arg VITE_KEYCLOAK_URL=http://localhost:8080 \
+          --build-arg VITE_KEYCLOAK_REALM=bootstrap \
+          --build-arg VITE_KEYCLOAK_CLIENT_ID=fe-application \
+          --build-arg VITE_API_BASE_URL=http://localhost:8081 \
+          "${tag_args[@]}" frontend
+
+    - name: Push the Frontend image (podman)
       if: github.event_name != 'pull_request'
       run: |
         set -euo pipefail
