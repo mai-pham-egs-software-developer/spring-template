@@ -2,7 +2,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  repository: ghcr.io/mai-pham-egs-software-developer/spring-template-backend
+  repository: ghcr.io/mai-pham-egs-software-developer/spring-template/images/backend
   tag: latest
   pullPolicy: IfNotPresent
 

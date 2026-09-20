@@ -43,8 +43,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Nested under images/ to match helm-charts.yml's charts/<name> layout --
+    # ghcr.io/<owner>/<repo>/images/backend, .../charts/backend, etc.
     - name: Set image name (lowercase, required by registries)
-      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}-backend' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}/images/backend' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
     # This runner has Podman, not Docker (no `docker` binary, no buildx) --
     # docker/login-action and docker/build-push-action both shell out to a
@@ -95,8 +97,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Nested under images/ to match helm-charts.yml's charts/<name> layout --
+    # ghcr.io/<owner>/<repo>/images/frontend, .../charts/frontend, etc.
     - name: Set image name (lowercase, required by registries)
-      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}-frontend' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}/images/frontend' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
     - name: Log in to GitHub Container Registry (podman)
       if: github.event_name != 'pull_request'

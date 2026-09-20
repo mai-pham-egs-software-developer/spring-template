@@ -57,3 +57,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+environment/onprem/scs/charts/backend-0.1.0.tgz
+environment/onprem/scs/charts/frontend-0.1.0.tgz
+environment/onprem/scs/charts/keycloak-0.1.0.tgz
+environment/onprem/scs/charts/minio-0.1.0.tgz
+environment/onprem/scs/charts/postgres-0.1.0.tgz

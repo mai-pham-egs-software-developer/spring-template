@@ -11,14 +11,14 @@ image built by
 helm install operator-fe . -n spring-template
 ```
 
-GHCR packages are private by default — unless the `spring-template-frontend` package is made
-public, set `imagePullSecrets` (see `values.yaml`).
+GHCR packages are private by default — unless the `images/frontend` package is made public, set
+`imagePullSecrets` (see `values.yaml`).
 
 ## Key values
 
 | Key | Default | Notes |
 |---|---|---|
-| `image.repository` / `.tag` | `ghcr.io/mai-pham-egs-software-developer/spring-template-frontend` / `latest` | |
+| `image.repository` / `.tag` | `ghcr.io/mai-pham-egs-software-developer/spring-template/images/frontend` / `latest` | Nested under `images/` to match the chart registry layout (`.../charts/<name>`) — see `.github/workflows/docker-image.yml`. |
 | `imagePullSecrets` | `[]` | |
 | `service.port` | `80` | |
 | `ingress.enabled` / `.host` | `false` / `operator.onprem.local` | |

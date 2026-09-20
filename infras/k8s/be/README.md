@@ -24,7 +24,7 @@ helm install be . -n spring-template
 
 | Key | Default | Notes |
 |---|---|---|
-| `image.repository` / `.tag` | `ghcr.io/mai-pham-egs-software-developer/spring-template-backend` / `latest` | |
+| `image.repository` / `.tag` | `ghcr.io/mai-pham-egs-software-developer/spring-template/images/backend` / `latest` | Nested under `images/` to match the chart registry layout (`.../charts/<name>`) — see `.github/workflows/docker-image.yml`. |
 | `imagePullSecrets` | `[]` | Needed unless the GHCR package is public. |
 | `db.host` / `.port` / `.database` | `db-postgres` / `5432` / `craft` | Assumes `db` chart is release `db` in this namespace. |
 | `db.existingSecret` | `""` | Set to `db-postgres` to reuse the `db` chart's own credentials. |

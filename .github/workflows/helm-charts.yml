@@ -3,7 +3,7 @@ name: Helm Charts CI
 on:
   push:
     branches: [ "main" ]
-    paths: [ "infras/k8s/**" ]
+    paths: [ "infras/k8s/**", "environment/onprem/scs/**" ]
 
 env:
   REGISTRY: ghcr.io
@@ -33,11 +33,19 @@ jobs:
       run: |
         set -euo pipefail
 
-        # Every subdirectory under infras/k8s that has a Chart.yaml is one module --
-        # this doesn't need updating as new charts (be/, db/, iam/, ...) are added.
+        # Every subdirectory under infras/k8s (component charts) or
+        # environment/onprem (the scs umbrella chart) that has a Chart.yaml is
+        # one module -- this doesn't need updating as new charts are added.
+        # infras/k8s is searched first and environment/onprem second so scs's
+        # own OCI dependencies (on the infras/k8s/* charts, same registry
+        # path) already exist by the time its `helm dependency build` runs.
         while IFS= read -r chart_yaml; do
           chart_dir="$(dirname "$chart_yaml")"
           echo "::group::${chart_dir}"
+
+          # No-op for charts with no `dependencies:` in Chart.yaml -- only scs
+          # actually needs this, to pull its subcharts from OCI before packaging.
+          helm dependency build "$chart_dir"
 
           helm lint "$chart_dir"
 
@@ -47,4 +55,4 @@ jobs:
           rm -rf "$out"
 
           echo "::endgroup::"
-        done < <(find infras/k8s -mindepth 2 -maxdepth 2 -name Chart.yaml)
+        done < <(find infras/k8s environment/onprem -mindepth 2 -maxdepth 2 -name Chart.yaml)
