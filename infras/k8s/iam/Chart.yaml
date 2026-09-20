@@ -2,5 +2,5 @@ apiVersion: v2
 name: keycloak
 description: Keycloak IAM for spring-template, backed by the db chart's PostgreSQL
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "26.7.4"
