@@ -1,0 +1,13 @@
+Backend ({{ .Chart.AppVersion }}) has been deployed as "{{ include "backend.fullname" . }}" in namespace {{ .Release.Namespace }}.
+
+  URL (in-cluster): http://{{ include "backend.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+Wired to:
+  - Postgres: {{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.database }}
+  - Keycloak: {{ .Values.keycloak.baseUrl }}/realms/{{ .Values.keycloak.realm }}
+  - Object storage: {{ .Values.objectStorage.endpoint }}
+
+If the pod is stuck initializing, check `kubectl -n {{ .Release.Namespace }} logs` on the
+wait-for-db / wait-for-keycloak init containers first, then the main container -- a
+CrashLoopBackOff there most likely means the "{{ .Values.keycloak.realm }}" realm doesn't exist in
+Keycloak yet (see ../iam/README.md).

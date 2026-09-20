@@ -1,0 +1,18 @@
+dependencies:
+- name: postgres
+  repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
+  version: 0.1.0
+- name: keycloak
+  repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
+  version: 0.1.0
+- name: minio
+  repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
+  version: 0.1.0
+- name: backend
+  repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
+  version: 0.1.0
+- name: frontend
+  repository: oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts
+  version: 0.1.0
+digest: sha256:c1c243af300fa75e0969982c133829206fc0bb48a23782dfa6ce785c987e953b
+generated: "2026-09-20T13:39:09.3851996+07:00"

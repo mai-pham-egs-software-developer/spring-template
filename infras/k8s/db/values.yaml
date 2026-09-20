@@ -1,0 +1,40 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: docker.io/library/postgres
+  tag: 16-alpine
+  pullPolicy: IfNotPresent
+
+# One shared user/password across every database below -- matches
+# infras/local/compose.yml (single postgres container, "keycloak" user owns
+# both the keycloak and app/craft databases).
+auth:
+  username: keycloak
+  password: keycloak
+  existingSecret: ""
+
+# The first entry becomes POSTGRES_DB (created automatically by the postgres
+# image on container start). Every other entry is created by an init script
+# under /docker-entrypoint-initdb.d/ -- which, like POSTGRES_DB itself, only
+# ever runs on the FIRST boot of an empty data volume (official postgres
+# image behavior). Add a database here later and it won't retroactively
+# apply to an already-initialized volume -- create it by hand instead.
+databases:
+  - keycloak
+  - craft
+
+service:
+  port: 5432
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

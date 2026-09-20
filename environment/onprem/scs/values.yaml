@@ -1,0 +1,64 @@
+# Umbrella chart for the full spring-template stack. Each subchart below gets a
+# fixed fullnameOverride so cross-references between them (db host, keycloak
+# base URL, minio endpoint) are deterministic no matter what release name this
+# umbrella itself is installed under. This matters because subchart templates
+# render using THIS chart's .Release.Name, not a release name of their own --
+# so each subchart's standalone default (e.g. the db chart alone assumes it's
+# installed as release "db") does not apply here and must be overridden,
+# which is what this file does.
+
+db:
+  enabled: true
+  fullnameOverride: db
+  auth:
+    username: keycloak
+    password: keycloak
+  databases:
+    - keycloak
+    - craft
+
+iam:
+  enabled: true
+  fullnameOverride: iam
+  admin:
+    username: admin
+    password: admin
+  db:
+    host: db
+    port: 5432
+    database: keycloak
+    # Reuses the db subchart's own Secret (name "db", keys username/password)
+    # instead of duplicating the password above.
+    existingSecret: db
+
+objectStorage:
+  enabled: true
+  fullnameOverride: minio
+  auth:
+    rootUser: minioadmin
+    rootPassword: minioadmin
+
+be:
+  enabled: true
+  fullnameOverride: be
+  db:
+    host: db
+    port: 5432
+    database: craft
+    # Reuses the db subchart's own Secret.
+    existingSecret: db
+  keycloak:
+    baseUrl: http://iam:8080
+    realm: bootstrap
+    admin:
+      # Reuses the iam subchart's own admin Secret (name "iam-admin").
+      existingSecret: iam-admin
+  objectStorage:
+    endpoint: http://minio:9000
+    # Reuses the objectStorage subchart's own Secret (name "minio", keys
+    # root-user/root-password).
+    existingSecret: minio
+
+operatorFe:
+  enabled: true
+  fullnameOverride: operator-fe

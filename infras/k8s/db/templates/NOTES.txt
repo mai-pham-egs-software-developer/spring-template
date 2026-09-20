@@ -1,0 +1,13 @@
+PostgreSQL ({{ .Chart.AppVersion }}) has been deployed as "{{ include "postgres.fullname" . }}" in namespace {{ .Release.Namespace }}.
+
+  Host: {{ include "postgres.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  Port: {{ .Values.service.port }}
+  Databases created: {{ join ", " .Values.databases }}
+
+Credentials live in Secret "{{ include "postgres.secretName" . }}" (keys: username, password).
+
+Point the iam and be charts at this database with (assuming this release is named
+"{{ .Release.Name }}" and installed in this same namespace):
+
+  db.host: {{ include "postgres.fullname" . }}
+  db.port: {{ .Values.service.port }}

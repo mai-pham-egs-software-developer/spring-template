@@ -1,0 +1,23 @@
+spring-template ({{ .Release.Name }}) deployed in namespace {{ .Release.Namespace }}.
+
+Enabled components:
+{{- if .Values.db.enabled }}
+  - db            postgres, host "db", databases: {{ join ", " .Values.db.databases }}
+{{- end }}
+{{- if .Values.iam.enabled }}
+  - iam           keycloak, host "iam:8080" -- the "bootstrap" realm the be chart expects is NOT auto-created (see infras/k8s/iam/README.md)
+{{- end }}
+{{- if .Values.objectStorage.enabled }}
+  - objectStorage minio, host "minio:9000" / console "minio:9001"
+{{- end }}
+{{- if .Values.be.enabled }}
+  - be            backend API, host "be:{{ .Values.be.service.port }}"
+{{- end }}
+{{- if .Values.operatorFe.enabled }}
+  - operatorFe    frontend, host "operator-fe:{{ .Values.operatorFe.service.port }}"
+{{- end }}
+
+Toggle components with --set <name>.enabled=false (db, iam, objectStorage, be, operatorFe).
+
+Port-forward any of them, e.g.:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/iam 8080:8080

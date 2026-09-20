@@ -1,0 +1,6 @@
+apiVersion: v2
+name: backend
+description: spring-template backend API (Spring Boot), wired to the db and iam charts
+type: application
+version: 0.1.0
+appVersion: "1.0.0-SNAPSHOT"

@@ -1,0 +1,73 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/mai-pham-egs-software-developer/spring-template-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# GHCR packages are private by default, even for a public repo. Create a
+# docker-registry Secret (kubectl create secret docker-registry ghcr-pull
+# --docker-server=ghcr.io --docker-username=<gh-user> --docker-password=<PAT with read:packages>)
+# and list its name here before this will pull successfully from outside
+# GitHub Actions' own runner.
+imagePullSecrets: []
+
+replicas: 1
+
+service:
+  port: 8081
+
+# Where to find the db chart's PostgreSQL. Defaults assume the db chart was
+# installed as release "db" in this same namespace.
+db:
+  host: db-postgres
+  port: 5432
+  database: craft
+  username: keycloak
+  password: keycloak
+  # Set to the db chart's own Secret name (db-postgres, by default) to reuse
+  # its credentials instead of duplicating them here -- both charts use the
+  # same key names (username, password) by design so this works directly.
+  existingSecret: ""
+
+# Where to find the iam chart's Keycloak. Defaults assume the iam chart was
+# installed as release "iam" in this same namespace. NOTE: the "bootstrap"
+# realm below must already exist in Keycloak (see ../iam/README.md) -- this
+# chart does not create it.
+keycloak:
+  baseUrl: http://iam-keycloak:8080
+  realm: bootstrap
+  admin:
+    username: admin
+    password: admin
+    # Set to the iam chart's own admin Secret name (iam-keycloak-admin, by
+    # default) to reuse its credentials instead of duplicating them here.
+    existingSecret: ""
+
+# Where to find the object-storage chart's MinIO (see ../object-storage).
+objectStorage:
+  endpoint: http://minio-minio:9000
+  accessKey: minioadmin
+  secretKey: minioadmin
+  # Set to the object-storage chart's own Secret name (minio-minio, by
+  # default) to reuse its credentials -- key names (root-user, root-password)
+  # are matched by design so this works directly.
+  existingSecret: ""
+
+# CORS origins for the operator-fe / bizz-fe SPAs calling this API.
+cors:
+  allowedOrigins: "http://localhost:5173, http://localhost:5174"
+
+resources: {}
+
+ingress:
+  enabled: false
+  className: ""
+  host: api.onprem.local
+  path: /
+  tls: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

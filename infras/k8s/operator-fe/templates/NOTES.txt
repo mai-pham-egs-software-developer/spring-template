@@ -1,0 +1,13 @@
+operator-fe has been deployed as "{{ include "operator-fe.fullname" . }}" in namespace {{ .Release.Namespace }}.
+
+  URL (in-cluster): http://{{ include "operator-fe.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+Port-forward to reach it locally:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "operator-fe.fullname" . }} 8080:{{ .Values.service.port }}
+
+Note: unlike the be chart, there is nothing to reconfigure here at deploy time -- Vite bakes
+VITE_KEYCLOAK_URL/REALM/CLIENT_ID and VITE_API_BASE_URL into the JS bundle at IMAGE BUILD time
+(see frontend/Containerfile and .github/workflows/docker-image.yml), not at container start.
+Pointing this at a different backend/Keycloak means rebuilding the image with different
+--build-arg values, not changing this chart's values.yaml.

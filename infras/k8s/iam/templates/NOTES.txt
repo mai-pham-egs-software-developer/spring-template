@@ -1,0 +1,14 @@
+Keycloak ({{ .Chart.AppVersion }}) has been deployed as "{{ include "keycloak.fullname" . }}" in namespace {{ .Release.Namespace }}.
+
+  URL (in-cluster): http://{{ include "keycloak.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+Admin credentials live in Secret "{{ include "keycloak.adminSecretName" . }}" (keys: username, password).
+
+Point the be chart's Keycloak base URL at (assuming this release is named
+"{{ .Release.Name }}" and installed in this same namespace):
+
+  keycloak.baseUrl: http://{{ include "keycloak.fullname" . }}:{{ .Values.service.port }}
+
+Port-forward to reach the admin console locally:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "keycloak.fullname" . }} 8080:{{ .Values.service.port }}

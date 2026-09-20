@@ -1,0 +1,31 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/mai-pham-egs-software-developer/spring-template-frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# GHCR packages are private by default, even for a public repo. Create a
+# docker-registry Secret (kubectl create secret docker-registry ghcr-pull
+# --docker-server=ghcr.io --docker-username=<gh-user> --docker-password=<PAT with read:packages>)
+# and list its name here before this will pull successfully from outside
+# GitHub Actions' own runner.
+imagePullSecrets: []
+
+replicas: 1
+
+service:
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  host: operator.onprem.local
+  path: /
+  tls: []
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,43 @@
+apiVersion: v2
+name: scs
+description: Umbrella chart for the full spring-template stack (db, iam, object-storage, be, operator-fe)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+# Pulled from ghcr.io as OCI artifacts -- published by
+# .github/workflows/helm-charts.yml (packages+pushes every infras/k8s/* chart
+# on push to main). Bump `version` here after that workflow publishes a new
+# chart version; `helm dependency update` re-resolves against whatever's on
+# the registry right now, `helm dependency build` reuses Chart.lock's pinned
+# versions without hitting the registry for a version check.
+dependencies:
+  - name: postgres
+    version: "0.1.0"
+    repository: "oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts"
+    alias: db
+    condition: db.enabled
+
+  - name: keycloak
+    version: "0.1.0"
+    repository: "oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts"
+    alias: iam
+    condition: iam.enabled
+
+  - name: minio
+    version: "0.1.0"
+    repository: "oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts"
+    alias: objectStorage
+    condition: objectStorage.enabled
+
+  - name: backend
+    version: "0.1.0"
+    repository: "oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts"
+    alias: be
+    condition: be.enabled
+
+  - name: frontend
+    version: "0.1.0"
+    repository: "oci://ghcr.io/mai-pham-egs-software-developer/spring-template/charts"
+    alias: operatorFe
+    condition: operatorFe.enabled

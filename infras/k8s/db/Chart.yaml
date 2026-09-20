@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres
+description: PostgreSQL for spring-template (Keycloak + backend), with configurable init databases
+type: application
+version: 0.1.0
+appVersion: "16-alpine"

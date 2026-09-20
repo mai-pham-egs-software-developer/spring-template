@@ -1,0 +1,50 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "26.7.4"
+  pullPolicy: IfNotPresent
+
+# start-dev matches infras/local/compose.yml (auto-reload, relaxed hostname
+# checks, plain HTTP allowed). Switch to ["start"] for anything beyond a
+# lab/template deployment -- that needs KC_HOSTNAME and TLS (or an
+# edge-terminating ingress + KC_PROXY=edge) configured, which this chart
+# does not set up.
+command:
+  - start-dev
+
+admin:
+  username: admin
+  password: admin
+  # Set to reuse an existing Secret instead (keys: username, password).
+  existingSecret: ""
+
+# Where to find the db chart's PostgreSQL. Defaults assume the db chart was
+# installed as release "db" in this same namespace (fullname db-postgres).
+db:
+  host: db-postgres
+  port: 5432
+  database: keycloak
+  username: keycloak
+  password: keycloak
+  # Set to the db chart's own Secret name (db-postgres, by default) to reuse
+  # its credentials instead of duplicating them here -- both charts use the
+  # same key names (username, password) precisely so this works.
+  existingSecret: ""
+
+service:
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  host: iam.onprem.local
+  path: /
+  tls: []
+
+replicas: 1
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
