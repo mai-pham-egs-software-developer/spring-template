@@ -1,6 +1,13 @@
 server:
   port: 8081
 
+# SearchClient wraps every OpenSearch request in LoggingOpenSearchTransport, which logs just
+# method + path + raw JSON body at DEBUG -- see that class for why (a clean alternative to
+# httpclient5's own byte-level wire logging, which also dumps headers/response noise).
+logging:
+  level:
+    com.my.craft.opensearch: debug
+
 spring:
   application:
     name: main

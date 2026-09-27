@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.my.craft.auditlog.service.AuditActionRecorder;
 import com.my.craft.security.dto.AddOrganizationMemberRequest;
 import com.my.craft.security.dto.OrganizationMemberResponse;
 import com.my.craft.security.dto.OrganizationResponse;
@@ -26,19 +25,16 @@ public class DefaultOrganizationMembershipService implements OrganizationMembers
     private final UserJpaRepository userRepository;
     private final RoleJpaRepository roleRepository;
     private final UserOrganizationRoleJpaRepository membershipRepository;
-    private final AuditActionRecorder auditActionRecorder;
 
     public DefaultOrganizationMembershipService(
             OrganizationJpaRepository organizationRepository,
             UserJpaRepository userRepository,
             RoleJpaRepository roleRepository,
-            UserOrganizationRoleJpaRepository membershipRepository,
-            AuditActionRecorder auditActionRecorder) {
+            UserOrganizationRoleJpaRepository membershipRepository) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.membershipRepository = membershipRepository;
-        this.auditActionRecorder = auditActionRecorder;
     }
 
     @Override
@@ -58,7 +54,6 @@ public class DefaultOrganizationMembershipService implements OrganizationMembers
         Role role = requireRole(organizationId, request.roleId());
         replaceMembership(organizationId, user.getId());
         UserOrganizationRole saved = membershipRepository.save(new UserOrganizationRole(user, organization, role));
-        auditActionRecorder.record("ORGANIZATION_MEMBER_ADDED", saved);
         return OrganizationMemberResponse.from(saved);
     }
 
@@ -74,7 +69,6 @@ public class DefaultOrganizationMembershipService implements OrganizationMembers
         Role role = requireRole(organizationId, request.roleId());
         membershipRepository.deleteAll(existing);
         UserOrganizationRole saved = membershipRepository.save(new UserOrganizationRole(user, organization, role));
-        auditActionRecorder.record("ORGANIZATION_MEMBER_UPDATED", saved);
         return OrganizationMemberResponse.from(saved);
     }
 
@@ -86,7 +80,6 @@ public class DefaultOrganizationMembershipService implements OrganizationMembers
             throw new OrganizationMemberNotFoundException(organizationId, userId);
         }
         membershipRepository.deleteAll(existing);
-        existing.forEach(membership -> auditActionRecorder.recordDeletion("ORGANIZATION_MEMBER_REMOVED", membership));
     }
 
     @Override

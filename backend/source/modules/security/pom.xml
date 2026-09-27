@@ -92,10 +92,5 @@
             <artifactId>keycloak-admin-client</artifactId>
             <version>26.0.12</version>
         </dependency>
-        <dependency>
-            <groupId>com.my.craft</groupId>
-            <artifactId>audit-log</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 </project>

@@ -6,7 +6,6 @@ import com.my.craft.security.service.OrganizationNotFoundException;
 import com.my.craft.security.service.OrganizationService;
 import org.springframework.stereotype.Service;
 
-import com.my.craft.auditlog.service.AuditActionRecorder;
 import com.my.craft.security.dto.OrganizationRequest;
 import com.my.craft.security.dto.OrganizationResponse;
 import com.my.craft.security.domain.Organization;
@@ -16,11 +15,9 @@ import com.my.craft.security.repository.OrganizationJpaRepository;
 public class DefaultOrganizationService implements OrganizationService {
 
     private final OrganizationJpaRepository organizationRepository;
-    private final AuditActionRecorder auditActionRecorder;
 
-    public DefaultOrganizationService(OrganizationJpaRepository organizationRepository, AuditActionRecorder auditActionRecorder) {
+    public DefaultOrganizationService(OrganizationJpaRepository organizationRepository) {
         this.organizationRepository = organizationRepository;
-        this.auditActionRecorder = auditActionRecorder;
     }
 
     @Override
@@ -36,7 +33,6 @@ public class DefaultOrganizationService implements OrganizationService {
     @Override
     public OrganizationResponse create(OrganizationRequest request) {
         Organization saved = organizationRepository.save(new Organization(request.name()));
-        auditActionRecorder.record("ORGANIZATION_CREATED", saved);
         return OrganizationResponse.from(saved);
     }
 
@@ -45,15 +41,13 @@ public class DefaultOrganizationService implements OrganizationService {
         Organization organization = findOrThrow(id);
         organization.setName(request.name());
         Organization saved = organizationRepository.save(organization);
-        auditActionRecorder.record("ORGANIZATION_UPDATED", saved);
         return OrganizationResponse.from(saved);
     }
 
     @Override
     public void delete(Long id) {
-        Organization organization = findOrThrow(id);
+        findOrThrow(id);
         organizationRepository.deleteById(id);
-        auditActionRecorder.recordDeletion("ORGANIZATION_DELETED", organization);
     }
 
     private Organization findOrThrow(Long id) {

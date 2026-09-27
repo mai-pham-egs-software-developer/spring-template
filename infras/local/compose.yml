@@ -66,7 +66,32 @@ services:
       mc alias set local http://minio:9000 minioadmin minioadmin &&
       mc mb --ignore-existing local/my-bucket
       "
+  opensearch:
+    image: docker.io/opensearchproject/opensearch:3
+    container_name: opensearch
 
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+
+      # Disable Security plugin
+      - DISABLE_SECURITY_PLUGIN=true
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+
+    restart: unless-stopped
 volumes:
   keycloak-db-data:
   minio-data:
+  opensearch-data:

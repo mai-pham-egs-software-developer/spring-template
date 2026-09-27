@@ -11,8 +11,9 @@
     
 	<modules>
 		<module>common</module>
-		<module>security</module>
-		<module>file-storage</module>
+<!--		<module>security</module>-->
+<!--		<module>file-storage</module>-->
 		<module>audit-log</module>
+		<module>opensearch</module>
 	</modules>
 </project>

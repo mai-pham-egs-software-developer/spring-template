@@ -7,7 +7,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.my.craft.auditlog.service.AuditActionRecorder;
 import com.my.craft.security.domain.OutboxEvent;
 import com.my.craft.security.domain.User;
 import com.my.craft.security.dto.CreateUserRequest;
@@ -24,13 +23,10 @@ public class DefaultUserAdminService implements UserAdminService {
 
     private final UserJpaRepository userRepository;
     private final OutboxEventJpaRepository outboxRepository;
-    private final AuditActionRecorder auditActionRecorder;
 
-    public DefaultUserAdminService(
-            UserJpaRepository userRepository, OutboxEventJpaRepository outboxRepository, AuditActionRecorder auditActionRecorder) {
+    public DefaultUserAdminService(UserJpaRepository userRepository, OutboxEventJpaRepository outboxRepository) {
         this.userRepository = userRepository;
         this.outboxRepository = outboxRepository;
-        this.auditActionRecorder = auditActionRecorder;
     }
 
     @Override
@@ -59,7 +55,6 @@ public class DefaultUserAdminService implements UserAdminService {
                 user.getId(),
                 OutboxEvent.USER_CREATE_REQUESTED,
                 Map.of("username", request.username(), "email", request.email(), "name", request.name())));
-        auditActionRecorder.record("USER_CREATED", user);
         return UserResponse.from(user);
     }
 
@@ -68,15 +63,13 @@ public class DefaultUserAdminService implements UserAdminService {
         User user = findOrThrow(id);
         user.setName(request.name());
         User saved = userRepository.save(user);
-        auditActionRecorder.record("USER_UPDATED", saved);
         return UserResponse.from(saved);
     }
 
     @Override
     public void delete(String id) {
-        User user = findOrThrow(id);
+        findOrThrow(id);
         userRepository.deleteById(id);
-        auditActionRecorder.recordDeletion("USER_DELETED", user);
     }
 
     private User findOrThrow(String id) {

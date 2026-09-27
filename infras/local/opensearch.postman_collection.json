@@ -1,0 +1,2669 @@
+{
+  "info": {
+    "name": "OpenSearch REST API",
+    "description": "General OpenSearch 2.x REST API collection.\n\nDefaults target the local stack in spring-template/infras/local/compose.yml (opensearch:2.11.1, security plugin disabled, analysis-icu installed).\n\nVariables: baseUrl, index, alias, docId, pipeline, template, username, password.\nAuth is \"No Auth\" because plugins.security.disabled=true. For a secured cluster, switch the collection auth to Basic ({{username}}/{{password}}) and use an https baseUrl.\n\nRun \"Indices > Create index\" before the Documents and Search folders.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9200"
+    },
+    {
+      "key": "index",
+      "value": "products"
+    },
+    {
+      "key": "alias",
+      "value": "products-read"
+    },
+    {
+      "key": "docId",
+      "value": "1"
+    },
+    {
+      "key": "pipeline",
+      "value": "products-pipeline"
+    },
+    {
+      "key": "template",
+      "value": "products-template"
+    },
+    {
+      "key": "scrollId",
+      "value": ""
+    },
+    {
+      "key": "pitId",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Cluster",
+      "item": [
+        {
+          "name": "Cluster info / version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "Cluster health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/health?pretty=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "health"
+              ],
+              "query": [
+                {
+                  "key": "pretty",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cluster health (index)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/health/{{index}}?level=shards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "health",
+                "{{index}}"
+              ],
+              "query": [
+                {
+                  "key": "level",
+                  "value": "shards"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cluster stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/stats?human=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "human",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cluster settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/settings?include_defaults=false&flat_settings=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "settings"
+              ],
+              "query": [
+                {
+                  "key": "include_defaults",
+                  "value": "false"
+                },
+                {
+                  "key": "flat_settings",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update cluster settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "settings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"persistent\": {\n    \"cluster.routing.allocation.disk.threshold_enabled\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Allocation explain",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/allocation/explain",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "allocation",
+                "explain"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nodes info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_nodes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_nodes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nodes stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_nodes/stats/jvm,fs,indices?human=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_nodes",
+                "stats",
+                "jvm,fs,indices"
+              ],
+              "query": [
+                {
+                  "key": "human",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Installed plugins",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/plugins?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "plugins"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pending tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cluster/pending_tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cluster",
+                "pending_tasks"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cat",
+      "description": "Human-readable _cat endpoints. Add format=json for JSON output.",
+      "item": [
+        {
+          "name": "Indices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/indices?v=true&s=index&h=health,status,index,docs.count,store.size",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "indices"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                },
+                {
+                  "key": "s",
+                  "value": "index"
+                },
+                {
+                  "key": "h",
+                  "value": "health,status,index,docs.count,store.size"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nodes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/nodes?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "nodes"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Shards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/shards/{{index}}?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "shards",
+                "{{index}}"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Aliases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/aliases?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "aliases"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/count/{{index}}?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "count",
+                "{{index}}"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/templates?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "templates"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Thread pool",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/thread_pool?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "thread_pool"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Allocation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_cat/allocation?v=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_cat",
+                "allocation"
+              ],
+              "query": [
+                {
+                  "key": "v",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Indices",
+      "item": [
+        {
+          "name": "Create index",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settings\": {\n    \"number_of_shards\": 1,\n    \"number_of_replicas\": 0,\n    \"analysis\": {\n      \"analyzer\": {\n        \"vi_icu\": {\n          \"type\": \"custom\",\n          \"tokenizer\": \"icu_tokenizer\",\n          \"filter\": [\n            \"icu_folding\",\n            \"lowercase\"\n          ]\n        }\n      }\n    }\n  },\n  \"mappings\": {\n    \"dynamic\": \"strict\",\n    \"properties\": {\n      \"id\": {\n        \"type\": \"keyword\"\n      },\n      \"name\": {\n        \"type\": \"text\",\n        \"analyzer\": \"vi_icu\",\n        \"fields\": {\n          \"raw\": {\n            \"type\": \"keyword\"\n          }\n        }\n      },\n      \"description\": {\n        \"type\": \"text\",\n        \"analyzer\": \"vi_icu\"\n      },\n      \"category\": {\n        \"type\": \"keyword\"\n      },\n      \"tags\": {\n        \"type\": \"keyword\"\n      },\n      \"price\": {\n        \"type\": \"double\"\n      },\n      \"stock\": {\n        \"type\": \"integer\"\n      },\n      \"active\": {\n        \"type\": \"boolean\"\n      },\n      \"createdAt\": {\n        \"type\": \"date\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Uses the analysis-icu plugin (icu_tokenizer + icu_folding) for Vietnamese / accent-insensitive text."
+          }
+        },
+        {
+          "name": "Index exists",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get index",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get mapping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_mapping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_mapping"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add field to mapping",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_mapping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_mapping"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"properties\": {\n    \"brand\": {\n      \"type\": \"keyword\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_settings?flat_settings=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_settings"
+              ],
+              "query": [
+                {
+                  "key": "flat_settings",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_settings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": {\n    \"number_of_replicas\": 0,\n    \"refresh_interval\": \"1s\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_refresh"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Flush",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_flush",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_flush"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Force merge",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_forcemerge?max_num_segments=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_forcemerge"
+              ],
+              "query": [
+                {
+                  "key": "max_num_segments",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Index stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_stats"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close index",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_close"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open index",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_open",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_open"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reindex",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_reindex?wait_for_completion=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_reindex"
+              ],
+              "query": [
+                {
+                  "key": "wait_for_completion",
+                  "value": "true"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": {\n    \"index\": \"{{index}}\"\n  },\n  \"dest\": {\n    \"index\": \"{{index}}-v2\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Clone index",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_clone/{{index}}-clone",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_clone",
+                "{{index}}-clone"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Source index must be read-only first: PUT /{{index}}/_settings {\"index.blocks.write\": true}"
+          }
+        },
+        {
+          "name": "Delete index",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Aliases & templates",
+      "item": [
+        {
+          "name": "Add alias",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_aliases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_aliases"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actions\": [\n    {\n      \"add\": {\n        \"index\": \"{{index}}\",\n        \"alias\": \"{{alias}}\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Swap alias (zero-downtime reindex)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_aliases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_aliases"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actions\": [\n    {\n      \"remove\": {\n        \"index\": \"{{index}}\",\n        \"alias\": \"{{alias}}\"\n      }\n    },\n    {\n      \"add\": {\n        \"index\": \"{{index}}-v2\",\n        \"alias\": \"{{alias}}\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get alias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_alias/{{alias}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_alias",
+                "{{alias}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove alias",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_alias/{{alias}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_alias",
+                "{{alias}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put index template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_index_template/{{template}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_index_template",
+                "{{template}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index_patterns\": [\n    \"{{index}}-*\"\n  ],\n  \"priority\": 100,\n  \"template\": {\n    \"settings\": {\n      \"number_of_shards\": 1,\n      \"number_of_replicas\": 0\n    },\n    \"mappings\": {\n      \"properties\": {\n        \"createdAt\": {\n          \"type\": \"date\"\n        }\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get index template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_index_template/{{template}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_index_template",
+                "{{template}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete index template",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_index_template/{{template}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_index_template",
+                "{{template}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Index document (with id)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc/{{docId}}?refresh=wait_for",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc",
+                "{{docId}}"
+              ],
+              "query": [
+                {
+                  "key": "refresh",
+                  "value": "wait_for"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"1\",\n  \"name\": \"Bơm tiêm 5ml\",\n  \"description\": \"Bơm tiêm vô trùng dùng một lần\",\n  \"category\": \"syringe\",\n  \"tags\": [\n    \"disposable\",\n    \"sterile\"\n  ],\n  \"price\": 1500,\n  \"stock\": 1000,\n  \"active\": true,\n  \"createdAt\": \"2026-09-26T08:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Index document (auto id)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc?refresh=wait_for",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc"
+              ],
+              "query": [
+                {
+                  "key": "refresh",
+                  "value": "wait_for"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"auto\",\n  \"name\": \"Găng tay y tế\",\n  \"description\": \"Găng tay nitrile không bột\",\n  \"category\": \"glove\",\n  \"tags\": [\n    \"nitrile\"\n  ],\n  \"price\": 90000,\n  \"stock\": 200,\n  \"active\": true,\n  \"createdAt\": \"2026-09-26T08:05:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const id = pm.response.json()._id;",
+                  "if (id) pm.collectionVariables.set(\"docId\", id);",
+                  "pm.test(\"created\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create (fail if exists)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_create/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_create",
+                "{{docId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"1\",\n  \"name\": \"Duplicate\",\n  \"category\": \"syringe\",\n  \"price\": 1,\n  \"stock\": 1,\n  \"active\": false,\n  \"createdAt\": \"2026-09-26T00:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc",
+                "{{docId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get source only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_source/{{docId}}?_source_includes=name,price",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_source",
+                "{{docId}}"
+              ],
+              "query": [
+                {
+                  "key": "_source_includes",
+                  "value": "name,price"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Document exists",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc",
+                "{{docId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Multi get",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_mget",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_mget"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    \"1\",\n    \"2\",\n    \"3\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Partial update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_update/{{docId}}?refresh=wait_for",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_update",
+                "{{docId}}"
+              ],
+              "query": [
+                {
+                  "key": "refresh",
+                  "value": "wait_for"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doc\": {\n    \"price\": 1800,\n    \"stock\": 950\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update with script",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_update/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_update",
+                "{{docId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"script\": {\n    \"source\": \"ctx._source.stock -= params.qty\",\n    \"lang\": \"painless\",\n    \"params\": {\n      \"qty\": 10\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Upsert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_update/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_update",
+                "{{docId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doc\": {\n    \"price\": 2000\n  },\n  \"doc_as_upsert\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update by query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_update_by_query?conflicts=proceed&refresh=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_update_by_query"
+              ],
+              "query": [
+                {
+                  "key": "conflicts",
+                  "value": "proceed"
+                },
+                {
+                  "key": "refresh",
+                  "value": "true"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"term\": {\n      \"category\": \"syringe\"\n    }\n  },\n  \"script\": {\n    \"source\": \"ctx._source.active = true\",\n    \"lang\": \"painless\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc",
+                "{{docId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete by query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_delete_by_query?conflicts=proceed&refresh=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_delete_by_query"
+              ],
+              "query": [
+                {
+                  "key": "conflicts",
+                  "value": "proceed"
+                },
+                {
+                  "key": "refresh",
+                  "value": "true"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"term\": {\n      \"active\": false\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Bulk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_bulk?refresh=wait_for",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_bulk"
+              ],
+              "query": [
+                {
+                  "key": "refresh",
+                  "value": "wait_for"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"index\":{\"_index\":\"{{index}}\",\"_id\":\"2\"}}\n{\"id\":\"2\",\"name\":\"Kim luồn tĩnh mạch\",\"description\":\"Kim luồn 22G\",\"category\":\"catheter\",\"tags\":[\"iv\"],\"price\":12000,\"stock\":500,\"active\":true,\"createdAt\":\"2026-09-25T10:00:00Z\"}\n{\"index\":{\"_index\":\"{{index}}\",\"_id\":\"3\"}}\n{\"id\":\"3\",\"name\":\"Bông y tế\",\"description\":\"Bông gòn thấm nước\",\"category\":\"cotton\",\"tags\":[\"absorbent\"],\"price\":25000,\"stock\":0,\"active\":false,\"createdAt\":\"2026-09-24T10:00:00Z\"}\n{\"update\":{\"_index\":\"{{index}}\",\"_id\":\"2\"}}\n{\"doc\":{\"stock\":480}}\n{\"delete\":{\"_index\":\"{{index}}\",\"_id\":\"999\"}}\n",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "description": "NDJSON body; must end with a newline. Same operations as OpenSearchService.bulk()."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"no bulk errors\", () => pm.expect(pm.response.json().errors).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Match all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match_all\": {}\n  },\n  \"from\": 0,\n  \"size\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Match (full text)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match\": {\n      \"name\": {\n        \"query\": \"bom tiem\",\n        \"operator\": \"and\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Accent-insensitive thanks to icu_folding: \"bom tiem\" matches \"Bơm tiêm\"."
+          }
+        },
+        {
+          "name": "Multi match",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"multi_match\": {\n      \"query\": \"vo trung\",\n      \"fields\": [\n        \"name^2\",\n        \"description\"\n      ],\n      \"fuzziness\": \"AUTO\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Term / terms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"terms\": {\n      \"category\": [\n        \"syringe\",\n        \"glove\"\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Bool + filter + range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"bool\": {\n      \"must\": [\n        {\n          \"match\": {\n            \"description\": \"y te\"\n          }\n        }\n      ],\n      \"filter\": [\n        {\n          \"term\": {\n            \"active\": true\n          }\n        },\n        {\n          \"range\": {\n            \"price\": {\n              \"gte\": 1000,\n              \"lte\": 100000\n            }\n          }\n        },\n        {\n          \"range\": {\n            \"createdAt\": {\n              \"gte\": \"now-30d/d\"\n            }\n          }\n        }\n      ],\n      \"must_not\": [\n        {\n          \"term\": {\n            \"stock\": 0\n          }\n        }\n      ]\n    }\n  },\n  \"sort\": [\n    {\n      \"price\": \"asc\"\n    },\n    {\n      \"_id\": \"asc\"\n    }\n  ],\n  \"_source\": [\n    \"id\",\n    \"name\",\n    \"price\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prefix / wildcard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"prefix\": {\n      \"name.raw\": \"Bơm\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Query string",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"category:syringe AND price:[1000 TO 5000]\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Highlight",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match\": {\n      \"description\": \"tiem\"\n    }\n  },\n  \"highlight\": {\n    \"fields\": {\n      \"description\": {}\n    },\n    \"pre_tags\": [\n      \"<em>\"\n    ],\n    \"post_tags\": [\n      \"</em>\"\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Aggregations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": 0,\n  \"aggs\": {\n    \"by_category\": {\n      \"terms\": {\n        \"field\": \"category\",\n        \"size\": 20\n      },\n      \"aggs\": {\n        \"avg_price\": {\n          \"avg\": {\n            \"field\": \"price\"\n          }\n        }\n      }\n    },\n    \"price_ranges\": {\n      \"range\": {\n        \"field\": \"price\",\n        \"ranges\": [\n          {\n            \"to\": 10000\n          },\n          {\n            \"from\": 10000,\n            \"to\": 50000\n          },\n          {\n            \"from\": 50000\n          }\n        ]\n      }\n    },\n    \"per_day\": {\n      \"date_histogram\": {\n        \"field\": \"createdAt\",\n        \"calendar_interval\": \"day\"\n      }\n    },\n    \"price_stats\": {\n      \"stats\": {\n        \"field\": \"price\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Search multiple indices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}},{{index}}-v2/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}},{{index}}-v2",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match_all\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mirrors OpenSearchService.search(List<String> indices, ...). Wildcards like products-* also work."
+          }
+        },
+        {
+          "name": "Search via URI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search?q=category:syringe&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "category:syringe"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_count"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"term\": {\n      \"active\": true\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Multi search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_msearch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_msearch"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"index\":\"{{index}}\"}\n{\"query\":{\"term\":{\"category\":\"syringe\"}},\"size\":5}\n{\"index\":\"{{index}}\"}\n{\"size\":0,\"aggs\":{\"total\":{\"value_count\":{\"field\":\"id\"}}}}\n",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Search after (deep paging)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": 10,\n  \"sort\": [\n    {\n      \"createdAt\": \"desc\"\n    },\n    {\n      \"id\": \"asc\"\n    }\n  ],\n  \"search_after\": [\n    \"2026-09-26T08:00:00Z\",\n    \"1\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Pass the sort values of the last hit from the previous page."
+          }
+        },
+        {
+          "name": "Scroll - start",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search?scroll=1m",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "scroll",
+                  "value": "1m"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": 100,\n  \"query\": {\n    \"match_all\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"scrollId\", pm.response.json()._scroll_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Scroll - next",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_search/scroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_search",
+                "scroll"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scroll\": \"1m\",\n  \"scroll_id\": \"{{scrollId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Scroll - clear",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_search/scroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_search",
+                "scroll"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scroll_id\": \"{{scrollId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PIT - create",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_search/point_in_time?keep_alive=1m",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_search",
+                "point_in_time"
+              ],
+              "query": [
+                {
+                  "key": "keep_alive",
+                  "value": "1m"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"pitId\", pm.response.json().pit_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PIT - search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": 10,\n  \"pit\": {\n    \"id\": \"{{pitId}}\",\n    \"keep_alive\": \"1m\"\n  },\n  \"sort\": [\n    {\n      \"createdAt\": \"desc\"\n    },\n    {\n      \"id\": \"asc\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PIT - delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_search/point_in_time",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_search",
+                "point_in_time"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pit_id\": [\n    \"{{pitId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Explain",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_explain/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_explain",
+                "{{docId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match\": {\n      \"name\": \"bom\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Validate query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_validate/query?explain=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_validate",
+                "query"
+              ],
+              "query": [
+                {
+                  "key": "explain",
+                  "value": "true"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match\": {\n      \"name\": \"bom tiem\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analyze",
+      "item": [
+        {
+          "name": "Analyze with index analyzer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_analyze"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analyzer\": \"vi_icu\",\n  \"text\": \"Bơm tiêm vô trùng 5ml\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Analyze ad-hoc (ICU)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_analyze"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenizer\": \"icu_tokenizer\",\n  \"filter\": [\n    \"icu_folding\",\n    \"lowercase\"\n  ],\n  \"text\": \"Găng tay y tế Nitrile\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Analyze standard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_analyze"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analyzer\": \"standard\",\n  \"text\": \"Găng tay y tế Nitrile\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Term vectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_termvectors/{{docId}}?fields=name",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_termvectors",
+                "{{docId}}"
+              ],
+              "query": [
+                {
+                  "key": "fields",
+                  "value": "name"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingest pipelines",
+      "item": [
+        {
+          "name": "Put pipeline",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_ingest/pipeline/{{pipeline}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_ingest",
+                "pipeline",
+                "{{pipeline}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Trim name, lowercase category, stamp ingest time\",\n  \"processors\": [\n    {\n      \"trim\": {\n        \"field\": \"name\",\n        \"ignore_missing\": true\n      }\n    },\n    {\n      \"lowercase\": {\n        \"field\": \"category\",\n        \"ignore_missing\": true\n      }\n    },\n    {\n      \"set\": {\n        \"field\": \"createdAt\",\n        \"value\": \"{{_ingest.timestamp}}\",\n        \"override\": false\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get pipeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_ingest/pipeline/{{pipeline}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_ingest",
+                "pipeline",
+                "{{pipeline}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Simulate pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_ingest/pipeline/{{pipeline}}/_simulate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_ingest",
+                "pipeline",
+                "{{pipeline}}",
+                "_simulate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"docs\": [\n    {\n      \"_source\": {\n        \"name\": \"  Bơm tiêm  \",\n        \"category\": \"SYRINGE\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Index through pipeline",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{index}}/_doc/10?pipeline={{pipeline}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{index}}",
+                "_doc",
+                "10"
+              ],
+              "query": [
+                {
+                  "key": "pipeline",
+                  "value": "{{pipeline}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"10\",\n  \"name\": \"  Khẩu trang  \",\n  \"category\": \"MASK\",\n  \"price\": 3000,\n  \"stock\": 100,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete pipeline",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_ingest/pipeline/{{pipeline}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_ingest",
+                "pipeline",
+                "{{pipeline}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks & snapshots",
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_tasks?detailed=true&actions=*reindex,*byquery",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_tasks"
+              ],
+              "query": [
+                {
+                  "key": "detailed",
+                  "value": "true"
+                },
+                {
+                  "key": "actions",
+                  "value": "*reindex,*byquery"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_tasks/:taskId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_tasks",
+                ":taskId"
+              ],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": "node_id:task_number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel task",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_tasks/:taskId/_cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_tasks",
+                ":taskId",
+                "_cancel"
+              ],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": "node_id:task_number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register fs repository",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_snapshot/backup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_snapshot",
+                "backup"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"fs\",\n  \"settings\": {\n    \"location\": \"/usr/share/opensearch/snapshots\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requires path.repo=/usr/share/opensearch/snapshots in the node config (not set in the local compose file)."
+          }
+        },
+        {
+          "name": "Create snapshot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_snapshot/backup/snap-1?wait_for_completion=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_snapshot",
+                "backup",
+                "snap-1"
+              ],
+              "query": [
+                {
+                  "key": "wait_for_completion",
+                  "value": "true"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"indices\": \"{{index}}\",\n  \"include_global_state\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List snapshots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_snapshot/backup/_all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_snapshot",
+                "backup",
+                "_all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Restore snapshot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_snapshot/backup/snap-1/_restore",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_snapshot",
+                "backup",
+                "snap-1",
+                "_restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"indices\": \"{{index}}\",\n  \"rename_pattern\": \"(.+)\",\n  \"rename_replacement\": \"restored-$1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

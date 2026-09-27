@@ -17,6 +17,13 @@ backend/source/
    └─ file-storage/         → presigned upload/download URLs, swappable S3/MinIO backend, temp-file cleanup schedule
 ```
 
+## Where code goes
+
+- **Service module (`applications/main`, ...)** — the running service and all business logic: controllers, app services, concrete indexes/entities and the queries on them. It imports the library modules and builds its logic on top of them.
+- **Library module (`modules/opensearch`, `modules/audit-log`, ...)** — the connection to an external system plus generic common code (client/config, base classes, annotations, paging, exceptions) that service modules use to implement their logic. No business-specific classes: a library never knows about a concrete index, entity or use case of an application.
+
+Example: `modules/opensearch` provides `SearchClient`, `BaseIndexDocument` + `@Document`/`@Field`, `SearchCriteria`/`Sort`, PIT/scroll/page paging and `BaseOpenSearchService`; `applications/main` owns `FileChunkIndex`/`SearchUnitIndex`, their `*IndexService` subclasses (collapse/highlight queries) under `main.search`, and the app services/DTOs under `main.service`.
+
 ## `applications/` — service modules
 
 Each module here is a deployable unit: its own `pom.xml` with `spring-boot-starter-parent` as Maven parent, a `@SpringBootApplication` entry point, and the `spring-boot-maven-plugin`. A service module pulls in whichever `modules/*` libraries it needs as plain dependencies.
